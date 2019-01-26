@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.C.Analysis.Light
-( analyze
+( C(..)
+, Cstate(..)
+, analyze
+, statement
+, defVariable
 ) where
 
 import           Control.Applicative
@@ -36,8 +40,14 @@ analyze s = case parse (cLang) s `feed` "" of
 --
 cLang :: Parser C
 cLang = statement <|> pure End
---cLang = defVariable <|> function <|> other <|> pure DataEnd
 
 
+-- | statement
+--
 statement :: Parser C
-statement = undefined
+statement = Csrc <$> defVariable <*> cLang
+
+-- | defVariable
+--
+defVariable :: Parser Cstate
+defVariable = Var <$> string "int" <* space <*> string "hoge" <* char ';' <*> pure Nothing

@@ -40,6 +40,8 @@ main = do
     options <- execParser parserInfo
     contents <- TIO.readFile . head . args $ options
 
-    let d = analyze contents
+    let d = case analyze contents of
+                (Right r) -> r
+                (Left s)  -> error s
 
     print d

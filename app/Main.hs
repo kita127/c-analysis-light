@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import Language.C.Analysis.Light (someFunc)
 
 main :: IO ()
 main = someFunc

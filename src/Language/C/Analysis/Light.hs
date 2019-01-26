@@ -1,6 +1,10 @@
+{-# language OverloadedStrings #-}
 module Language.C.Analysis.Light
-( someFunc
+( analyze
 ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "c-analysis-light"
+import qualified Data.Text as T
+
+
+analyze :: T.Text -> T.Text
+analyze _ = "output"

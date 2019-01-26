@@ -1,6 +1,12 @@
 module Main where
 
-import Language.C.Analysis.Light (someFunc)
+import qualified Data.Text                 as T
+import           Language.C.Analysis.Light (analyze)
 
 main :: IO ()
-main = someFunc
+main = do
+    -- 入力
+
+    let d = analyze $ T.pack "input"
+
+    print d

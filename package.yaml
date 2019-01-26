@@ -24,6 +24,8 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - text
 
 executables:
   cal-exe:
@@ -35,6 +37,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - c-analysis-light
+    - text
 
 tests:
   c-analysis-light-test:

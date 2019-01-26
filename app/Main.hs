@@ -1,9 +1,9 @@
 module Main where
 
 import qualified Data.Text                 as T
-import qualified Data.Text.IO                 as TIO
-import           Options.Applicative
+import qualified Data.Text.IO              as TIO
 import           Language.C.Analysis.Light (analyze)
+import           Options.Applicative
 
 
 

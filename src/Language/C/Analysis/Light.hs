@@ -7,4 +7,4 @@ import qualified Data.Text as T
 
 
 analyze :: T.Text -> T.Text
-analyze _ = "output"
+analyze = id

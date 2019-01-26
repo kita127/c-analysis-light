@@ -38,6 +38,7 @@ executables:
     dependencies:
     - c-analysis-light
     - text
+    - optparse-applicative
 
 tests:
   c-analysis-light-test:

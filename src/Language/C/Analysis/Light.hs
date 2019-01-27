@@ -2,6 +2,7 @@
 module Language.C.Analysis.Light
 ( C(..)
 , Cstate(..)
+, token
 , analyze
 , statement
 , defVariable
@@ -42,6 +43,10 @@ analyze s = case parse (cLang) s `feed` "" of
 cLang :: Parser C
 cLang = statement <|> pure End
 
+-- | token
+--
+token :: Parser a -> Parser a
+token p = many' space *> p <* many' space
 
 -- | statement
 --
@@ -51,7 +56,9 @@ statement = Csrc <$> defVariable <*> cLang
 -- | defVariable
 --
 defVariable :: Parser Cstate
-defVariable = Var <$> (T.pack <$> many1 letter) <* space <*> identifire <* char ';' <*> pure Nothing
+defVariable = token $
+    Var <$> (T.pack <$> many1 letter) <* space <*> identifire <* char ';' <*> pure Nothing
+
 
 -- | identifire
 --

@@ -14,6 +14,7 @@ main :: IO ()
 main = do
     runTestTT $ TestList
       [ testSample
+      , testToken
       , testDefVariable
       , testIdentifire
       ]
@@ -26,17 +27,25 @@ testSample = TestList
         "hello test" ~?= "hello test"
   ]
 
+testToken :: Test
+testToken = TestList
+  [ "testToken normal 1" ~:
+        (exRes $ parse (token identifire) "    hoge_var    " `feed` "") ~?= Right "hoge_var"
+  , "testToken normal 2" ~:
+        (exRes $ parse (token identifire) "    hoge_var\n    " `feed` "") ~?= Right "hoge_var"
+  ]
+
 testDefVariable :: Test
 testDefVariable = TestList
   [ "testDefVariable normal 1" ~:
-        (exRes $ parse defVariable "int hoge;") ~?= Right
+        (exRes $ parse defVariable "int hoge;" `feed` "") ~?= Right
             Var {
               typ = "int"
             , name = "hoge"
             , initVal = Nothing
             }
   , "testDefVariable normal 2" ~:
-        (exRes $ parse defVariable "MyStruct st_var;") ~?= Right
+        (exRes $ parse defVariable "MyStruct st_var;" `feed` "") ~?= Right
             Var {
               typ = "MyStruct"
             , name = "st_var"

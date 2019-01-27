@@ -56,7 +56,15 @@ statement = Csrc <$> defVariable <*> cLang
 --
 defVariable :: Parser Cstate
 defVariable = token $
-    Var <$> (T.pack <$> many1 letter) <* space <*> identifire <* char ';' <*> pure Nothing
+    Var <$> (T.pack <$> many1 letter) <* space <*> identifire <*> initValue <* char ';'
+
+-- | initValue
+--
+initValue :: Parser (Maybe T.Text)
+initValue = (Just <$> p') <|> pure Nothing
+    where
+        p' :: Parser T.Text
+        p' = T.pack <$ space <* char '=' <* space <*> many1 digit
 
 
 -- | identifire

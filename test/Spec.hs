@@ -51,6 +51,14 @@ testDefVariable = TestList
             , name = "st_var"
             , initVal = Nothing
             }
+
+  , "testDefVariable initial value 1" ~:
+        (exRes $ parse defVariable "Hoge yyy_abc = 100;" `feed` "") ~?= Right
+            Var {
+              typ = "Hoge"
+            , name = "yyy_abc"
+            , initVal = Just "100"
+            }
   ]
 
 testIdentifire :: Test

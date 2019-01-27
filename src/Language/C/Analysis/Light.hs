@@ -33,8 +33,7 @@ data Cstate = Var
 -- | analyze
 --
 analyze :: T.Text -> Either String C
-analyze s = case parse (cLang) s `feed` "" of
---analyze s = case parse (cLang <* endOfInput) s `feed` "" of
+analyze s = case parse (cLang <* endOfInput) s `feed` "" of
     (Done _ r) -> Right r
     a          -> Left "error"
 

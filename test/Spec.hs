@@ -1,19 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 import           Data.Attoparsec.Text      hiding (take)
+import           Data.List                 (intercalate)
 import qualified Data.Text                 as T
 import           Language.C.Analysis.Light
 import           Test.HUnit
 
 exRes :: Result a -> Either String a
-exRes (Done _ r)   = Right r
-exRes (Fail _ _ s) = Left s
-exRes (Partial _)  = Left "Partial"
+exRes (Done _ r)    = Right r
+exRes (Fail _ ss s) = Left $ intercalate " : " (s:ss)
+exRes (Partial _)   = Left "Partial"
 
 main :: IO ()
 main = do
     runTestTT $ TestList
       [ testSample
       , testDefVariable
+      , testIdentifire
       ]
     return ()
 
@@ -33,4 +35,21 @@ testDefVariable = TestList
             , name = "hoge"
             , initVal = Nothing
             }
+  , "testDefVariable normal 2" ~:
+        (exRes $ parse defVariable "MyStruct st_var;") ~?= Right
+            Var {
+              typ = "MyStruct"
+            , name = "st_var"
+            , initVal = Nothing
+            }
+  ]
+
+testIdentifire :: Test
+testIdentifire = TestList
+  [ "testIdentifire normal 1" ~:
+        (exRes $ parse identifire "hoge_var" `feed` "") ~?= Right "hoge_var"
+  , "testIdentifire include number 1" ~:
+        (exRes $ parse identifire "bar123hoge" `feed` "") ~?= Right "bar123hoge"
+  , "testIdentifire first letter which is number 1" ~:
+        (exRes $ parse identifire "999_error" `feed` "") ~?= Left "Failed reading: satisfy : '_'"
   ]

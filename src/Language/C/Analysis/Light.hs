@@ -5,6 +5,7 @@ module Language.C.Analysis.Light
 , analyze
 , statement
 , defVariable
+, identifire
 ) where
 
 import           Control.Applicative
@@ -50,4 +51,17 @@ statement = Csrc <$> defVariable <*> cLang
 -- | defVariable
 --
 defVariable :: Parser Cstate
-defVariable = Var <$> string "int" <* space <*> string "hoge" <* char ';' <*> pure Nothing
+defVariable = Var <$> (T.pack <$> many1 letter) <* space <*> identifire <* char ';' <*> pure Nothing
+
+-- | identifire
+--
+identifire :: Parser T.Text
+identifire = do
+    head' <- letter <|> char '_'
+    tail' <- many1 idLetter
+    return $ T.pack $ head' : tail'
+
+-- | idLetter
+--
+idLetter :: Parser Char
+idLetter = letter <|> digit <|> char '_'

@@ -15,6 +15,7 @@ main = do
     runTestTT $ TestList
       [ testSample
       , testToken
+      , testValue
       , testDefVariable
       , testIdentifire
       ]
@@ -59,6 +60,20 @@ testDefVariable = TestList
             , name = "yyy_abc"
             , initVal = Just "100"
             }
+  , "testDefVariable initial value 2" ~:
+        (exRes $ parse defVariable "Hoge     yyy_abc            =    100       ;" `feed` "") ~?= Right
+            Var {
+              typ = "Hoge"
+            , name = "yyy_abc"
+            , initVal = Just "100"
+            }
+  , "testDefVariable initial value 3" ~:
+        (exRes $ parse defVariable "char    foobar_xyz   =  VALUE;" `feed` "") ~?= Right
+            Var {
+              typ = "char"
+            , name = "foobar_xyz"
+            , initVal = Just "VALUE"
+            }
   ]
 
 testIdentifire :: Test
@@ -69,4 +84,14 @@ testIdentifire = TestList
         (exRes $ parse identifire "bar123hoge" `feed` "") ~?= Right "bar123hoge"
   , "testIdentifire first letter which is number 1" ~:
         (exRes $ parse identifire "999_error" `feed` "") ~?= Left "Failed reading: satisfy : '_'"
+  ]
+
+testValue :: Test
+testValue = TestList
+  [ "testValue normal 1" ~:
+        (exRes $ parse value "VALUE" `feed` "") ~?= Right "VALUE"
+  , "testValue normal 2" ~:
+        (exRes $ parse value "234" `feed` "") ~?= Right "234"
+  , "testValue normal 3" ~:
+        (exRes $ parse value "0xA5" `feed` "") ~?= Right "0xA5"
   ]

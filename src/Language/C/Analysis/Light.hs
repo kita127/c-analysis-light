@@ -7,6 +7,7 @@ module Language.C.Analysis.Light
 , statement
 , defVariable
 , identifire
+, value
 ) where
 
 import           Control.Applicative
@@ -47,6 +48,13 @@ cLang = statement <|> pure End
 token :: Parser a -> Parser a
 token p = many' space *> p <* many' space
 
+-- | blanks
+--
+-- 1つ以上のスペース
+--
+blanks :: Parser ()
+blanks = many1 space *> pure ()
+
 -- | statement
 --
 statement :: Parser C
@@ -56,16 +64,15 @@ statement = Csrc <$> defVariable <*> cLang
 --
 defVariable :: Parser Cstate
 defVariable = token $
-    Var <$> (T.pack <$> many1 letter) <* space <*> identifire <*> initValue <* char ';'
+    Var <$> (T.pack <$> many1 letter) <* blanks <*> identifire <*> initValue <* char ';'
 
 -- | initValue
 --
 initValue :: Parser (Maybe T.Text)
-initValue = (Just <$> p') <|> pure Nothing
+initValue = token $ (Just <$> p') <|> pure Nothing
     where
         p' :: Parser T.Text
-        p' = T.pack <$ space <* char '=' <* space <*> many1 digit
-
+        p' = char '=' *> blanks *> value
 
 -- | identifire
 --
@@ -74,6 +81,11 @@ identifire = do
     head' <- letter <|> char '_'
     tail' <- many1 idLetter
     return $ T.pack $ head' : tail'
+
+-- | value
+--
+value :: Parser T.Text
+value = (T.pack <$> many1 digit) <|> identifire
 
 -- | idLetter
 --

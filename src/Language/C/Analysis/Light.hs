@@ -85,7 +85,18 @@ identifire = do
 -- | value
 --
 value :: Parser T.Text
-value = (T.pack <$> many1 digit) <|> identifire
+value = hex <|> (T.pack <$> many1 digit) <|> identifire
+
+-- | hex
+--
+hex :: Parser T.Text
+hex = do
+    string "0x"
+    n <- p
+    return $ T.pack ('0':'x':n)
+    where
+        p :: Parser String
+        p = many1 $ satisfy $ inClass "a-fA-F0-9"
 
 -- | idLetter
 --

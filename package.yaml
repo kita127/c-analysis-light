@@ -27,6 +27,8 @@ library:
   dependencies:
   - text
   - attoparsec
+  ghc-options:
+  - -Wall
 
 executables:
   cal-exe:
@@ -36,6 +38,7 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
     dependencies:
     - c-analysis-light
     - text

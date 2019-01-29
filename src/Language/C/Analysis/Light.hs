@@ -69,10 +69,10 @@ defVariable = token $
 -- | initValue
 --
 initValue :: Parser (Maybe T.Text)
-initValue = token $ (Just <$> p') <|> pure Nothing
+initValue = token $ (Just <$> p) <|> pure Nothing
     where
-        p' :: Parser T.Text
-        p' = char '=' *> blanks *> value
+        p :: Parser T.Text
+        p = char '=' *> blanks *> value
 
 -- | identifire
 --

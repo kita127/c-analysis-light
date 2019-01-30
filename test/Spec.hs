@@ -92,6 +92,8 @@ testValue = TestList
         (exRes $ parse value "VALUE" `feed` "") ~?= Right "VALUE"
   , "testValue normal 2" ~:
         (exRes $ parse value "234" `feed` "") ~?= Right "234"
-  , "testValue normal 3" ~:
+  , "testValue hex 1" ~:
         (exRes $ parse value "0xA5" `feed` "") ~?= Right "0xA5"
+  , "testValue oct 1" ~:
+        (exRes $ parse value "036" `feed` "") ~?= Right "036"
   ]

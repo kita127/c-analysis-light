@@ -41,36 +41,43 @@ testDefVariable = TestList
   [ "testDefVariable normal 1" ~:
         (exRes $ parse defVariable "int hoge;" `feed` "") ~?= Right
             Var {
-              typ = "int"
+              typ = ["int"]
             , name = "hoge"
             , initVal = Nothing
             }
   , "testDefVariable normal 2" ~:
         (exRes $ parse defVariable "MyStruct st_var;" `feed` "") ~?= Right
             Var {
-              typ = "MyStruct"
+              typ = ["MyStruct"]
             , name = "st_var"
+            , initVal = Nothing
+            }
+  , "testDefVariable normal 3" ~:
+        (exRes $ parse defVariable "unsigned int  uint_var;" `feed` "") ~?= Right
+            Var {
+              typ = ["unsigned", "int"]
+            , name = "uint_var"
             , initVal = Nothing
             }
 
   , "testDefVariable initial value 1" ~:
         (exRes $ parse defVariable "Hoge yyy_abc = 100;" `feed` "") ~?= Right
             Var {
-              typ = "Hoge"
+              typ = ["Hoge"]
             , name = "yyy_abc"
             , initVal = Just "100"
             }
   , "testDefVariable initial value 2" ~:
         (exRes $ parse defVariable "Hoge     yyy_abc            =    100       ;" `feed` "") ~?= Right
             Var {
-              typ = "Hoge"
+              typ = ["Hoge"]
             , name = "yyy_abc"
             , initVal = Just "100"
             }
   , "testDefVariable initial value 3" ~:
         (exRes $ parse defVariable "char    foobar_xyz   =  VALUE;" `feed` "") ~?= Right
             Var {
-              typ = "char"
+              typ = ["char"]
             , name = "foobar_xyz"
             , initVal = Just "VALUE"
             }

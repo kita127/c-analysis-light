@@ -22,7 +22,7 @@ data C = Prepro T.Text C
 
 
 data Cstate = Var
-              { typ     :: T.Text
+              { typ     :: [T.Text]
               , name    :: T.Text
               , initVal :: Maybe T.Text
               }
@@ -64,8 +64,12 @@ statement = Csrc <$> defVariable <*> cLang
 -- | defVariable
 --
 defVariable :: Parser Cstate
-defVariable = token $
-    Var <$> (T.pack <$> many1 letter) <* blanks <*> identifire <*> initValue <* char ';'
+defVariable = token $ do
+    ids <- many1 $ token identifire
+    v <- initValue
+    char ';'
+    let (n, ts) = (last ids, init ids)
+    return $ Var ts n v
 
 -- | initValue
 --

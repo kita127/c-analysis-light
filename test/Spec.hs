@@ -81,6 +81,21 @@ testDefVariable = TestList
             , name = "foobar_xyz"
             , initVal = Just "VALUE"
             }
+  , "testDefVariable initial value 4" ~:
+        (exRes $ parse defVariable "  static char    foobar_xyz   =  0xFFFF  ;" `feed` "") ~?= Right
+            Var {
+              typ = ["static", "char"]
+            , name = "foobar_xyz"
+            , initVal = Just "0xFFFF"
+            }
+
+  , "testDefVariable pointer 1" ~:
+        (exRes $ parse defVariable "  signed int    *p_val_axz   =  &hoge  ;" `feed` "") ~?= Right
+            Var {
+              typ = ["signed", "int", "*"]
+            , name = "p_val_axz"
+            , initVal = Just "&hoge"
+            }
   ]
 
 testIdentifire :: Test
@@ -103,4 +118,6 @@ testValue = TestList
         (exRes $ parse value "0xA5" `feed` "") ~?= Right "0xA5"
   , "testValue oct 1" ~:
         (exRes $ parse value "036" `feed` "") ~?= Right "036"
+  , "testValue address 1" ~:
+        (exRes $ parse value "&hoge" `feed` "") ~?= Right "&hoge"
   ]

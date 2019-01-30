@@ -65,7 +65,7 @@ statement = Csrc <$> defVariable <*> cLang
 --
 defVariable :: Parser Cstate
 defVariable = token $ do
-    ids <- many1 $ token identifire
+    ids <- many1 $ token $ identifire <|> pointer
     v <- initValue
     char ';'
     let (n, ts) = (last ids, init ids)
@@ -87,10 +87,20 @@ identifire = do
     tail' <- many1 idLetter
     return $ T.pack $ head' : tail'
 
+-- | pointer
+--
+pointer :: Parser T.Text
+pointer = string "*"
+
 -- | value
 --
 value :: Parser T.Text
-value = hex <|> (T.pack <$> many1 digit) <|> identifire
+value = hex <|> (T.pack <$> many1 digit) <|> addressVal <|> identifire
+    where
+        addressVal = do
+            char '&'
+            n <- identifire
+            return $ '&' `T.cons` n
 
 -- | hex
 --

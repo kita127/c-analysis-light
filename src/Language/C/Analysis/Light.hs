@@ -12,6 +12,7 @@ module Language.C.Analysis.Light
 
 import           Control.Applicative
 import           Data.Attoparsec.Text hiding (take)
+import           Data.Functor         (($>))
 import qualified Data.Text            as T
 
 data C = Prepro T.Text C
@@ -36,7 +37,7 @@ data Cstate = Var
 analyze :: T.Text -> Either String C
 analyze s = case parse (cLang <* endOfInput) s `feed` "" of
     (Done _ r) -> Right r
-    a          -> Left "error"
+    _          -> Left "error"
 
 --  cLang
 --
@@ -53,7 +54,7 @@ token p = many' space *> p <* many' space
 -- 1つ以上のスペース
 --
 blanks :: Parser ()
-blanks = many1 space *> pure ()
+blanks = many1 space $> ()
 
 -- | statement
 --

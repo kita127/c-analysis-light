@@ -27,6 +27,9 @@ library:
   dependencies:
   - text
   - attoparsec
+  - aeson
+  - aeson-pretty
+  - bytestring
   ghc-options:
   - -Wall
 
@@ -43,6 +46,7 @@ executables:
     - c-analysis-light
     - text
     - optparse-applicative
+    - bytestring
 
 tests:
   c-analysis-light-test:

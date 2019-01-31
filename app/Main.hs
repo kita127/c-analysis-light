@@ -1,8 +1,9 @@
 module Main where
 
-import qualified Data.Text                 as T
-import qualified Data.Text.IO              as TIO
-import           Language.C.Analysis.Light (analyze)
+import qualified Data.ByteString.Lazy.Char8       as B
+import qualified Data.Text.IO                     as TIO
+import           Language.C.Analysis.Light        (analyze)
+import           Language.C.Analysis.Light.Encode (encodeJson)
 import           Options.Applicative
 
 
@@ -44,4 +45,6 @@ main = do
                 (Right r) -> r
                 (Left s)  -> error s
 
-    print d
+    let jd = encodeJson d
+
+    B.putStrLn jd

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 module Language.C.Analysis.Light
 ( C(..)
 , Cstate(..)
@@ -11,12 +12,20 @@ module Language.C.Analysis.Light
 ) where
 
 import           Control.Applicative
+import           Data.Aeson.TH
 import           Data.Attoparsec.Text hiding (take)
 import           Data.Functor         (($>))
 import qualified Data.Text            as T
 
-data C = Prepro T.Text C
-       | Csrc Cstate C
+
+data C = Prepro
+         { contents :: T.Text
+         , next :: C
+         }
+       | Csrc
+         { statements :: Cstate
+         , next :: C
+         }
        | End
     deriving (Eq, Show)
 
@@ -31,6 +40,9 @@ data Cstate = Var
               }
             deriving (Eq, Show)
 
+-- TemplateHaskell
+deriveJSON defaultOptions ''C
+deriveJSON defaultOptions ''Cstate
 
 -- | analyze
 --

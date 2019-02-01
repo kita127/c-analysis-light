@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-import           Data.Attoparsec.Text      hiding (take)
-import           Data.List                 (intercalate)
-import qualified Data.Text                 as T
+import           Data.Attoparsec.Text           hiding (take)
+import           Data.List                      (intercalate)
+import qualified Data.Text                      as T
 import           Language.C.Analysis.Light
+import qualified Language.C.Analysis.Light.Data as DATA
 import           Test.HUnit
 
 exRes :: Result a -> Either String a
@@ -18,6 +19,7 @@ main = do
       , testValue
       , testDefVariable
       , testIdentifire
+      , testDefFunction
       ]
     return ()
 
@@ -36,65 +38,89 @@ testToken = TestList
         (exRes $ parse (token identifire) "    hoge_var\n    " `feed` "") ~?= Right "hoge_var"
   ]
 
+testDefFunction :: Test
+testDefFunction = TestList
+  [ "testDefFunction normal 1" ~:
+        (exRes $ parse defFunction "void hoge_func( void )\n{\n}\n" `feed` "") ~?= Right
+            DATA.Func {
+              DATA.return = ["void"]
+            , DATA.name   = "hoge_func"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.typ = ["void"]
+                , DATA.name = ""
+                , DATA.initVal = Nothing
+                }
+              ]
+            }
+  ]
+
 testDefVariable :: Test
 testDefVariable = TestList
   [ "testDefVariable normal 1" ~:
         (exRes $ parse defVariable "int hoge;" `feed` "") ~?= Right
-            Var {
-              typ = ["int"]
-            , name = "hoge"
-            , initVal = Nothing
+            DATA.Var {
+              DATA.typ = ["int"]
+            , DATA.name = "hoge"
+            , DATA.initVal = Nothing
             }
   , "testDefVariable normal 2" ~:
         (exRes $ parse defVariable "MyStruct st_var;" `feed` "") ~?= Right
-            Var {
-              typ = ["MyStruct"]
-            , name = "st_var"
-            , initVal = Nothing
+            DATA.Var {
+              DATA.typ = ["MyStruct"]
+            , DATA.name = "st_var"
+            , DATA.initVal = Nothing
             }
   , "testDefVariable normal 3" ~:
         (exRes $ parse defVariable "unsigned int  uint_var;" `feed` "") ~?= Right
-            Var {
-              typ = ["unsigned", "int"]
-            , name = "uint_var"
-            , initVal = Nothing
+            DATA.Var {
+              DATA.typ = ["unsigned", "int"]
+            , DATA.name = "uint_var"
+            , DATA.initVal = Nothing
             }
 
   , "testDefVariable initial value 1" ~:
         (exRes $ parse defVariable "Hoge yyy_abc = 100;" `feed` "") ~?= Right
-            Var {
-              typ = ["Hoge"]
-            , name = "yyy_abc"
-            , initVal = Just "100"
+            DATA.Var {
+              DATA.typ = ["Hoge"]
+            , DATA.name = "yyy_abc"
+            , DATA.initVal = Just "100"
             }
   , "testDefVariable initial value 2" ~:
         (exRes $ parse defVariable "Hoge     yyy_abc            =    100       ;" `feed` "") ~?= Right
-            Var {
-              typ = ["Hoge"]
-            , name = "yyy_abc"
-            , initVal = Just "100"
+            DATA.Var {
+              DATA.typ = ["Hoge"]
+            , DATA.name = "yyy_abc"
+            , DATA.initVal = Just "100"
             }
   , "testDefVariable initial value 3" ~:
         (exRes $ parse defVariable "char    foobar_xyz   =  VALUE;" `feed` "") ~?= Right
-            Var {
-              typ = ["char"]
-            , name = "foobar_xyz"
-            , initVal = Just "VALUE"
+            DATA.Var {
+              DATA.typ = ["char"]
+            , DATA.name = "foobar_xyz"
+            , DATA.initVal = Just "VALUE"
             }
   , "testDefVariable initial value 4" ~:
         (exRes $ parse defVariable "  static char    foobar_xyz   =  0xFFFF  ;" `feed` "") ~?= Right
-            Var {
-              typ = ["static", "char"]
-            , name = "foobar_xyz"
-            , initVal = Just "0xFFFF"
+            DATA.Var {
+              DATA.typ = ["static", "char"]
+            , DATA.name = "foobar_xyz"
+            , DATA.initVal = Just "0xFFFF"
             }
 
   , "testDefVariable pointer 1" ~:
         (exRes $ parse defVariable "  signed int    *p_val_axz   =  &hoge  ;" `feed` "") ~?= Right
-            Var {
-              typ = ["signed", "int", "*"]
-            , name = "p_val_axz"
-            , initVal = Just "&hoge"
+            DATA.Var {
+              DATA.typ = ["signed", "int", "*"]
+            , DATA.name = "p_val_axz"
+            , DATA.initVal = Just "&hoge"
+            }
+  , "testDefVariable pointer 2" ~:
+        (exRes $ parse defVariable "  signed  * int    **p_val_00d4   =  &hoge  ;" `feed` "") ~?= Right
+            DATA.Var {
+              DATA.typ = ["signed", "*", "int", "*", "*"]
+            , DATA.name = "p_val_00d4"
+            , DATA.initVal = Just "&hoge"
             }
   ]
 

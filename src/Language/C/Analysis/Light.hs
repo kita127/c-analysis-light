@@ -1,60 +1,35 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Language.C.Analysis.Light
-( C(..)
-, Cstate(..)
-, token
+( token
 , analyze
 , statement
 , defVariable
+, defFunction
 , identifire
 , value
 ) where
 
 import           Control.Applicative
 import           Data.Aeson.TH
-import           Data.Attoparsec.Text hiding (take)
-import           Data.Functor         (($>))
-import qualified Data.Text            as T
+import           Data.Attoparsec.Text           hiding (take)
+import           Data.Functor                   (($>))
+import qualified Data.Text                      as T
+import qualified Language.C.Analysis.Light.Data as DATA
 
 
-data C = Prepro
-         { contents :: T.Text
-         , next :: C
-         }
-       | Csrc
-         { statements :: Cstate
-         , next :: C
-         }
-       | End
-    deriving (Eq, Show)
-
-
-data Cstate = Var
-              { typ     :: [T.Text]
-              , name    :: T.Text
-              , initVal :: Maybe T.Text
-              }
-            | Func
-              { name    :: T.Text
-              }
-            deriving (Eq, Show)
-
--- TemplateHaskell
-deriveJSON defaultOptions ''C
-deriveJSON defaultOptions ''Cstate
 
 -- | analyze
 --
-analyze :: T.Text -> Either String C
+analyze :: T.Text -> Either String DATA.C
 analyze s = case parse (cLang <* endOfInput) s `feed` "" of
     (Done _ r) -> Right r
     _          -> Left "error"
 
 --  cLang
 --
-cLang :: Parser C
-cLang = statement <|> pure End
+cLang :: Parser DATA.C
+cLang = statement <|> pure DATA.End
 
 -- | token
 --
@@ -70,18 +45,34 @@ blanks = many1 space $> ()
 
 -- | statement
 --
-statement :: Parser C
-statement = Csrc <$> defVariable <*> cLang
+statement :: Parser DATA.C
+statement =
+        DATA.Csrc <$> defVariable <*> cLang
+    <|> DATA.Csrc <$> defFunction <*> cLang
+
+-- | defFunction
+--
+defFunction :: Parser DATA.Cstate
+defFunction =
+        DATA.Func
+    <$> many1 identifire <* blanks
+    <*> identifire <* char '('
+    <*> arguments <* char ')' <* many' space <* char '{' <* many' space <* char '}' <* many' space
+
+-- | arguments
+--
+arguments :: Parser [DATA.Cstate]
+arguments = token (string "void") $> [DATA.Var {DATA.typ = ["void"], DATA.name = "", DATA.initVal = Nothing}]
 
 -- | defVariable
 --
-defVariable :: Parser Cstate
+defVariable :: Parser DATA.Cstate
 defVariable = token $ do
     ids <- many1 $ token $ identifire <|> pointer
     v <- initValue
     char ';'
     let (n, ts) = (last ids, init ids)
-    return $ Var ts n v
+    return $ DATA.Var ts n v
 
 -- | initValue
 --

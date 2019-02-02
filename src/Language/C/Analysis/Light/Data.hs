@@ -15,7 +15,8 @@ data C = Prepro
          , next     :: C
          }
        | Csrc
-         { statements :: Cstate
+         { prepro     :: Maybe T.Text
+         , statements :: Cstate
          , next       :: C
          }
        | End

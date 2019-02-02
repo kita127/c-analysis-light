@@ -21,6 +21,8 @@ main = do
       , testIdentifire
       , testDefFunction
       , testArguments
+
+      , testJustPreIf
       ]
     return ()
 
@@ -244,4 +246,17 @@ testArguments = TestList
               , DATA.initVal = Nothing
               }
             ]
+  ]
+
+testJustPreIf :: Test
+testJustPreIf = TestList
+  [ "testJustPreIf normal 1" ~:
+        (exRes $ parse (justPreIf defVariable) "#if PRE_VARI == 1\nint hoge;\n#endif" `feed` "") ~?= Right
+            ( Just "#if PRE_VARI == 1"
+            , DATA.Var {
+                DATA.typ = ["int"]
+              , DATA.name = "hoge"
+              , DATA.initVal = Nothing
+              }
+            )
   ]

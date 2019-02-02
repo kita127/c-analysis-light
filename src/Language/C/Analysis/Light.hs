@@ -9,6 +9,7 @@ module Language.C.Analysis.Light
 , identifire
 , value
 , arguments
+, justPreIf
 ) where
 
 import           Control.Applicative
@@ -49,8 +50,26 @@ blanks = many1 space $> ()
 --
 statement :: Parser DATA.C
 statement =
-        DATA.Csrc <$> defVariable <*> cLang
-    <|> DATA.Csrc <$> defFunction <*> cLang
+        uncurry DATA.Csrc <$> preIf defVariable <*> cLang
+    <|> uncurry DATA.Csrc <$> preIf defFunction <*> cLang
+
+-- | preIf
+--
+preIf :: Parser DATA.Cstate -> Parser (Maybe T.Text, DATA.Cstate)
+preIf p = justPreIf p <|> ((,) <$> pure Nothing <*> token p)
+
+-- | justPreIf
+--
+justPreIf :: Parser DATA.Cstate -> Parser (Maybe T.Text, DATA.Cstate)
+justPreIf p = do
+    s <- string "#if PRE_VARI == 1"
+    endOfLine
+    d <- p
+    endOfLine
+    string "#endif"
+    return $ (Just s, d)
+
+
 
 -- | defFunction
 --
@@ -86,7 +105,7 @@ typeAndID = do
 -- | defVariable
 --
 defVariable :: Parser DATA.Cstate
-defVariable = token $ do
+defVariable = do
     (name, types) <- typeAndID
     v <- initValue
     char ';'

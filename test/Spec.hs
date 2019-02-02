@@ -38,10 +38,19 @@ testToken = TestList
         (exRes $ parse (token identifire) "    hoge_var\n    " `feed` "") ~?= Right "hoge_var"
   ]
 
+-- | testDefFunction input
+--
+
+-- void hoge_func( void )
+-- {
+-- }
+--
+s_1 = "void hoge_func( void )\n{\n}\n"
+
 testDefFunction :: Test
 testDefFunction = TestList
   [ "testDefFunction normal 1" ~:
-        (exRes $ parse defFunction "void hoge_func( void )\n{\n}\n" `feed` "") ~?= Right
+        (exRes $ parse defFunction s_1 `feed` "") ~?= Right
             DATA.Func {
               DATA.return = ["void"]
             , DATA.name   = "hoge_func"

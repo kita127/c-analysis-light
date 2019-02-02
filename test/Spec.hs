@@ -8,7 +8,7 @@ import           Test.HUnit
 
 exRes :: Result a -> Either String a
 exRes (Done _ r)    = Right r
-exRes (Fail _ ss s) = Left $ intercalate " : " (s:ss)
+exRes (Fail i ss s) = Left $ intercalate " : " ((show i):s:ss)
 exRes (Partial _)   = Left "Partial"
 
 main :: IO ()
@@ -47,13 +47,19 @@ testToken = TestList
 --
 s_1 = "void hoge_func( void )\n{\n}\n"
 
---     void
--- arg_func__1 (    int arg1   )
+-- void
+-- arg_func__1(    int arg1   )
 -- {
 -- }
 -- 
 s_2 = "void\narg_func__1(    int arg1   )\n{\n}\n"
 
+--      void
+--  arg_Thogexxx__1  (    char arg1   )
+-- {
+-- }
+-- 
+s_s_1 = "     void\n arg_Thogexxx__1  (    char arg1   )\n{\n}\n"
 
 
 
@@ -80,6 +86,20 @@ testDefFunction = TestList
             , DATA.args   = [
                 DATA.Var {
                   DATA.typ = ["int"]
+                , DATA.name = "arg1"
+                , DATA.initVal = Nothing
+                }
+              ]
+            }
+
+  , "testDefFunction space 1" ~:
+        (exRes $ parse defFunction s_s_1 `feed` "") ~?= Right
+            DATA.Func {
+              DATA.return = ["void"]
+            , DATA.name   = "arg_Thogexxx__1"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.typ = ["char"]
                 , DATA.name = "arg1"
                 , DATA.initVal = Nothing
                 }
@@ -163,8 +183,10 @@ testIdentifire = TestList
   , "testIdentifire include number 1" ~:
         (exRes $ parse identifire "bar123hoge" `feed` "") ~?= Right "bar123hoge"
   , "testIdentifire first letter which is number 1" ~:
-        (exRes $ parse identifire "999_error" `feed` "") ~?= Left "Failed reading: satisfy : '_'"
+        (exRes $ parse identifire "999_error" `feed` "") ~?= Left "\"999_error\" : Failed reading: satisfy : '_'"
   ]
+
+
 
 testValue :: Test
 testValue = TestList

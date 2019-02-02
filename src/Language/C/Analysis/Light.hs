@@ -54,11 +54,14 @@ statement =
 -- | defFunction
 --
 defFunction :: Parser DATA.Cstate
-defFunction =
-        DATA.Func
-    <$> many1 identifire <* blanks
-    <*> identifire <* char '('
-    <*> arguments <* char ')' <* many' space <* char '{' <* many' space <* char '}' <* many' space
+defFunction = do
+    (name, ret) <- typeAndID
+    token $ char '('
+    args <- arguments
+    token $ char ')'
+    token $ char '{'
+    token $ char '}'
+    return $ DATA.Func ret name args
 
 -- | arguments
 --

@@ -17,7 +17,8 @@ import           Data.Functor                   (($>))
 import qualified Data.Text                      as T
 import qualified Language.C.Analysis.Light.Data as DATA
 
-
+type IDStr = T.Text
+type TypeStr = T.Text
 
 -- | analyze
 --
@@ -62,17 +63,30 @@ defFunction =
 -- | arguments
 --
 arguments :: Parser [DATA.Cstate]
-arguments = token (string "void") $> [DATA.Var {DATA.typ = ["void"], DATA.name = "", DATA.initVal = Nothing}]
+arguments = void <|> justArg
+    where
+        void = token (string "void") $>
+            [DATA.Var {DATA.typ = ["void"], DATA.name = "", DATA.initVal = Nothing}]
+
+        justArg = many1 $ do
+            (name, types) <- typeAndID
+            return $ DATA.Var types name Nothing
+
+-- | typeAndID
+--
+typeAndID :: Parser (IDStr, [TypeStr])
+typeAndID = do
+    ids <- many1 $ token $ identifire <|> pointer
+    return (last ids, init ids)
 
 -- | defVariable
 --
 defVariable :: Parser DATA.Cstate
 defVariable = token $ do
-    ids <- many1 $ token $ identifire <|> pointer
+    (name, types) <- typeAndID
     v <- initValue
     char ';'
-    let (n, ts) = (last ids, init ids)
-    return $ DATA.Var ts n v
+    return $ DATA.Var types name v
 
 -- | initValue
 --
@@ -84,6 +98,7 @@ initValue = token $ (Just <$> p) <|> pure Nothing
 
 -- | identifire
 --
+-- TODO:
 identifire :: Parser T.Text
 identifire = do
     head' <- letter <|> char '_'

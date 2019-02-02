@@ -47,6 +47,16 @@ testToken = TestList
 --
 s_1 = "void hoge_func( void )\n{\n}\n"
 
+--     void
+-- arg_func__1 (    int arg1   )
+-- {
+-- }
+-- 
+s_2 = "void\narg_func__1(    int arg1   )\n{\n}\n"
+
+
+
+
 testDefFunction :: Test
 testDefFunction = TestList
   [ "testDefFunction normal 1" ~:
@@ -58,6 +68,19 @@ testDefFunction = TestList
                 DATA.Var {
                   DATA.typ = ["void"]
                 , DATA.name = ""
+                , DATA.initVal = Nothing
+                }
+              ]
+            }
+  , "testDefFunction normal 2" ~:
+        (exRes $ parse defFunction s_2 `feed` "") ~?= Right
+            DATA.Func {
+              DATA.return = ["void"]
+            , DATA.name   = "arg_func__1"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.typ = ["int"]
+                , DATA.name = "arg1"
                 , DATA.initVal = Nothing
                 }
               ]

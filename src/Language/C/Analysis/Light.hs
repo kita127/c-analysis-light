@@ -8,6 +8,7 @@ module Language.C.Analysis.Light
 , defFunction
 , identifire
 , value
+, arguments
 ) where
 
 import           Control.Applicative
@@ -66,12 +67,12 @@ defFunction = do
 -- | arguments
 --
 arguments :: Parser [DATA.Cstate]
-arguments = void <|> justArg
+arguments = void <|> justArgs
     where
         void = token (string "void") $>
             [DATA.Var {DATA.typ = ["void"], DATA.name = "", DATA.initVal = Nothing}]
 
-        justArg = many1 $ do
+        justArgs = (flip sepBy1) (char ',') $ do
             (name, types) <- typeAndID
             return $ DATA.Var types name Nothing
 

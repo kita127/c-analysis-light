@@ -20,6 +20,7 @@ main = do
       , testDefVariable
       , testIdentifire
       , testDefFunction
+      , testArguments
       ]
     return ()
 
@@ -51,16 +52,23 @@ s_1 = "void hoge_func( void )\n{\n}\n"
 -- arg_func__1(    int arg1   )
 -- {
 -- }
--- 
+--
 s_2 = "void\narg_func__1(    int arg1   )\n{\n}\n"
+
+-- static int * mul_ret_arg_f ( char hoge, int *p_fuga )
+-- {
+-- }
+--
+s_3 = "static int * mul_ret_arg_f ( char hoge, int *p_fuga )\n{\n}\n"
+
+
 
 --      void
 --  arg_Thogexxx__1  (    char arg1   )
 -- {
 -- }
--- 
+--
 s_s_1 = "     void\n arg_Thogexxx__1  (    char arg1   )\n{\n}\n"
-
 
 
 testDefFunction :: Test
@@ -87,6 +95,29 @@ testDefFunction = TestList
                 DATA.Var {
                   DATA.typ = ["int"]
                 , DATA.name = "arg1"
+                , DATA.initVal = Nothing
+                }
+              ]
+            }
+
+-- static int * mul_ret_arg_f ( char hoge, int *p_fuga )
+-- {
+-- }
+--
+  , "testDefFunction normal 3" ~:
+        (exRes $ parse defFunction s_3 `feed` "") ~?= Right
+            DATA.Func {
+              DATA.return = ["static", "int", "*"]
+            , DATA.name   = "mul_ret_arg_f"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.typ = ["char"]
+                , DATA.name = "hoge"
+                , DATA.initVal = Nothing
+                }
+              , DATA.Var {
+                  DATA.typ = ["int", "*"]
+                , DATA.name = "p_fuga"
                 , DATA.initVal = Nothing
                 }
               ]
@@ -200,4 +231,17 @@ testValue = TestList
         (exRes $ parse value "036" `feed` "") ~?= Right "036"
   , "testValue address 1" ~:
         (exRes $ parse value "&hoge" `feed` "") ~?= Right "&hoge"
+  ]
+
+testArguments :: Test
+testArguments = TestList
+  [ "testArguments normal 1" ~:
+        (exRes $ parse arguments "  int arg " `feed` "") ~?= Right
+            [
+              DATA.Var {
+                DATA.typ = ["int"]
+              , DATA.name = "arg"
+              , DATA.initVal = Nothing
+              }
+            ]
   ]

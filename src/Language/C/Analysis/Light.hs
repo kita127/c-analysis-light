@@ -47,18 +47,24 @@ token p = spaceOrComment *> p <* spaceOrComment
 --
 spaceOrComment :: Parser ()
 spaceOrComment = skipMany $
-    space $> () <|> comment
+    space $> () <|> comment1 <|> comment2
 
--- | comment
+-- | comment1
 --
-comment :: Parser ()
-comment = do
+comment1 :: Parser ()
+comment1 = do
     string "/*"
     consume
 
     where
         consume = string "*/" $> () <|> anyChar *> consume
 
+-- | comment2
+--
+-- // ~~~~~~~~~~~~~
+--
+comment2 :: Parser ()
+comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
 
 -- | statement
 --

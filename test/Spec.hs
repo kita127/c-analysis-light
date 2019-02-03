@@ -347,4 +347,11 @@ testComment = TestList
             , DATA.name = "my_var"
             , DATA.initVal = Just "tmp_v"
             }
+  , "testComment normal 2" ~:
+        (exRes $ parse defVariable "    // comment\nMyType my_var = tmp_v;" `feed` "") ~?= Right
+            DATA.Var {
+              DATA.typ = ["MyType"]
+            , DATA.name = "my_var"
+            , DATA.initVal = Just "tmp_v"
+            }
   ]

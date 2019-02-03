@@ -78,17 +78,17 @@ statement pre =
 preproIfStart :: Parser DATA.C
 preproIfStart = do
     skipMany space
-    s <- string "#if PRE_VARI == 1"
-    endOfLine
+    s <- p
     d <- statement (Just s)
     return d
+    where
+        p = token $ string "#if PRE_VARI == 1" <* endOfLine
 
 -- | preproIfEnd
 --
 preproIfEnd :: Parser DATA.C
 preproIfEnd = do
-    endOfLine
-    string "#endif"
+    token $ string "#endif"
     cLang Nothing
 
 

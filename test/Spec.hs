@@ -269,7 +269,7 @@ s_preIf_1 = "#if PRE_VARI == 1\nsigned int pre_var;\nunsigned  char pre_var2;\n#
 -- #endif
 -- int normal_var  =  55;
 --
-s_preIf_2 = "#if PRE_VARI == 1\nsigned int pre_var;\nunsigned  char pre_var2;\n#endif\nint normal_var  =  55;\n"
+s_preIf_2 = "    #if PRE_VARI == 1\nsigned int pre_var;\nunsigned  char pre_var2;\n    #endif    /* PRE_VARI */\nint normal_var  =  55;\n"
 
 
 testJustPreIf :: Test

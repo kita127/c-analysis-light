@@ -11,7 +11,8 @@ import qualified Data.Text            as T
 
 
 data C = Prepro
-         { contents :: T.Text
+         { prepro   :: Maybe T.Text
+         , contents :: T.Text
          , next     :: C
          }
        | Csrc

@@ -9,7 +9,7 @@ module Language.C.Analysis.Light
 , identifire
 , value
 , arguments
-, justPreIf
+, preproIfStart
 ) where
 
 import           Control.Applicative
@@ -26,15 +26,17 @@ type TypeStr = T.Text
 -- | analyze
 --
 analyze :: T.Text -> Either String DATA.C
-analyze s = case parse (cLang <* endOfInput) s `feed` "" of
+analyze s = case parse (cParseStart <* endOfInput) s `feed` "" of
     (Done _ r)    -> Right r
     (Fail i ss s) -> Left $ intercalate " : " ((show i):s:ss)
     (Partial _)   -> Left "partial ..."
+    where
+        cParseStart = cLang Nothing
 
 --  cLang
 --
-cLang :: Parser DATA.C
-cLang = statement <|> pure DATA.End
+cLang :: Maybe T.Text -> Parser DATA.C
+cLang pre = preproIfStart <|> statement pre <|> preproIfEnd <|> pure DATA.End
 
 -- | token
 --
@@ -50,27 +52,28 @@ blanks = many1 space $> ()
 
 -- | statement
 --
-statement :: Parser DATA.C
-statement =
-        uncurry DATA.Csrc <$> preIf defVariable <*> cLang
-    <|> uncurry DATA.Csrc <$> preIf defFunction <*> cLang
+statement :: Maybe T.Text -> Parser DATA.C
+statement pre =
+        DATA.Csrc <$> pure pre <*> defVariable <*> cLang pre
+    <|> DATA.Csrc <$> pure pre <*> defFunction <*> cLang pre
 
--- | preIf
+-- | preproIfStart
 --
-preIf :: Parser DATA.Cstate -> Parser (Maybe T.Text, DATA.Cstate)
-preIf p = justPreIf p <|> ((,) <$> pure Nothing <*> token p)
-
--- | justPreIf
---
-justPreIf :: Parser DATA.Cstate -> Parser (Maybe T.Text, DATA.Cstate)
-justPreIf p = do
+preproIfStart :: Parser DATA.C
+preproIfStart = do
+    skipMany space
     s <- string "#if PRE_VARI == 1"
     endOfLine
-    d <- p
+    d <- statement (Just s)
+    return d
+
+-- | preproIfEnd
+--
+preproIfEnd :: Parser DATA.C
+preproIfEnd = do
     endOfLine
     string "#endif"
-    return $ (Just s, d)
-
+    cLang Nothing
 
 
 -- | defFunction

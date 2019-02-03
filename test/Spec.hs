@@ -248,15 +248,87 @@ testArguments = TestList
             ]
   ]
 
+
+
+-- | test preproIfStart
+--
+
+
+-- #if PRE_VARI == 1
+-- signed int pre_var;
+-- unsigned  char pre_var2;
+-- #endif
+--
+s_preIf_1 = "#if PRE_VARI == 1\nsigned int pre_var;\nunsigned  char pre_var2;\n#endif\n"
+
+
+-- #if PRE_VARI == 1
+-- signed int pre_var;
+-- unsigned  char pre_var2;
+-- #endif
+-- int normal_var  =  55;
+--
+s_preIf_2 = "#if PRE_VARI == 1\nsigned int pre_var;\nunsigned  char pre_var2;\n#endif\nint normal_var  =  55;\n"
+
+
 testJustPreIf :: Test
 testJustPreIf = TestList
   [ "testJustPreIf normal 1" ~:
-        (exRes $ parse (justPreIf defVariable) "#if PRE_VARI == 1\nint hoge;\n#endif" `feed` "") ~?= Right
-            ( Just "#if PRE_VARI == 1"
-            , DATA.Var {
+        (exRes $ parse preproIfStart "#if PRE_VARI == 1\nint hoge;\n#endif" `feed` "") ~?= Right
+            DATA.Csrc {
+              DATA.prepro = Just "#if PRE_VARI == 1"
+            , DATA.statements = DATA.Var {
                 DATA.typ = ["int"]
               , DATA.name = "hoge"
               , DATA.initVal = Nothing
               }
-            )
+            , DATA.next = DATA.End
+            }
+  , "testJustPreIf normal 2" ~:
+        (exRes $ parse preproIfStart s_preIf_1 `feed` "") ~?= Right
+            DATA.Csrc {
+              DATA.prepro = Just "#if PRE_VARI == 1"
+            , DATA.statements = DATA.Var {
+                DATA.typ = ["signed", "int"]
+              , DATA.name = "pre_var"
+              , DATA.initVal = Nothing
+              }
+            , DATA.next = DATA.Csrc {
+                DATA.prepro = Just "#if PRE_VARI == 1"
+              , DATA.statements = DATA.Var {
+                  DATA.typ = ["unsigned", "char"]
+                , DATA.name = "pre_var2"
+                , DATA.initVal = Nothing
+                }
+              , DATA.next = DATA.End
+              }
+            }
+  , "testJustPreIf normal 3" ~:
+        (exRes $ parse preproIfStart s_preIf_2 `feed` "") ~?= Right
+            DATA.Csrc {
+              DATA.prepro = Just "#if PRE_VARI == 1"
+            , DATA.statements = DATA.Var {
+                DATA.typ = ["signed", "int"]
+              , DATA.name = "pre_var"
+              , DATA.initVal = Nothing
+              }
+            , DATA.next = DATA.Csrc {
+                DATA.prepro = Just "#if PRE_VARI == 1"
+              , DATA.statements = DATA.Var {
+                  DATA.typ = ["unsigned", "char"]
+                , DATA.name = "pre_var2"
+                , DATA.initVal = Nothing
+                }
+              , DATA.next = DATA.Csrc {
+                  DATA.prepro = Nothing
+                , DATA.statements = DATA.Var {
+                    DATA.typ = ["int"]
+                  , DATA.name = "normal_var"
+                  , DATA.initVal = Just "55"
+                  }
+                , DATA.next = DATA.End
+                }
+              }
+            }
   ]
+

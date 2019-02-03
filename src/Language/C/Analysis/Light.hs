@@ -16,6 +16,7 @@ import           Control.Applicative
 import           Data.Aeson.TH
 import           Data.Attoparsec.Text           hiding (take)
 import           Data.Functor                   (($>))
+import           Data.List                      (intercalate)
 import qualified Data.Text                      as T
 import qualified Language.C.Analysis.Light.Data as DATA
 
@@ -26,8 +27,9 @@ type TypeStr = T.Text
 --
 analyze :: T.Text -> Either String DATA.C
 analyze s = case parse (cLang <* endOfInput) s `feed` "" of
-    (Done _ r) -> Right r
-    _          -> Left "error"
+    (Done _ r)    -> Right r
+    (Fail i ss s) -> Left $ intercalate " : " ((show i):s:ss)
+    (Partial _)   -> Left "partial ..."
 
 --  cLang
 --

@@ -142,7 +142,6 @@ initValue = Just <$> p <|> pure Nothing
 
 -- | identifire
 --
--- TODO:
 identifire :: Parser T.Text
 identifire = do
     head' <- letter <|> char '_'

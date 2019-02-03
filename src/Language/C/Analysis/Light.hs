@@ -82,7 +82,19 @@ preproIfStart = do
     d <- statement (Just s)
     return d
     where
-        p = token $ string "#if PRE_VARI == 1" <* endOfLine
+        p = preIfState
+
+-- | preIfState
+--
+preIfState :: Parser T.Text
+preIfState = do
+    preCond <- token $ string "#if"
+    left    <- token identifire
+    exp     <- token $ string "=="
+    right   <- value
+    takeTill isEndOfLine
+    endOfLine
+    return $ T.intercalate " " [preCond, left, exp, right]
 
 -- | preproIfEnd
 --
@@ -142,6 +154,9 @@ initValue = Just <$> p <|> pure Nothing
 
 -- | identifire
 --
+-- TODO:
+-- token 関数は字句単位のパーサが処理すべき
+--
 identifire :: Parser T.Text
 identifire = do
     head' <- letter <|> char '_'
@@ -154,6 +169,9 @@ pointer :: Parser T.Text
 pointer = string "*"
 
 -- | value
+--
+-- TODO:
+-- token 関数は字句単位のパーサが処理すべき
 --
 value :: Parser T.Text
 value = hex <|> (T.pack <$> many1 digit) <|> addressVal <|> identifire

@@ -331,6 +331,17 @@ testJustPreIf = TestList
                 }
               }
             }
+  , "testJustPreIf normal 4" ~:
+        (exRes $ parse preproIfStart "\n#if HOGE_XXX == VARI1 \nint hoge;\n#endif    /* HOGE_XXX */\n" `feed` "") ~?= Right
+            DATA.Csrc {
+              DATA.prepro = Just "#if HOGE_XXX == VARI1"
+            , DATA.statements = DATA.Var {
+                DATA.typ = ["int"]
+              , DATA.name = "hoge"
+              , DATA.initVal = Nothing
+              }
+            , DATA.next = DATA.End
+            }
   ]
 
 

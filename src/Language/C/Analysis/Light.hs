@@ -109,17 +109,13 @@ preproIfStart = do
 
 -- | preIfState
 --
--- TODO:
--- tillEndOfLine に書き換える
---
 preIfState :: Parser T.Text
 preIfState = do
     preCond <- token $ string "#if"
     left    <- token identifire
     ex      <- token $ string "=="
     right   <- value
-    takeTill isEndOfLine
-    endOfLine
+    tillEndOfLine
     return $ T.intercalate " " [preCond, left, ex, right]
 
 -- | preproIfEnd

@@ -13,12 +13,12 @@ module Language.C.Analysis.Light
 ) where
 
 import           Control.Applicative
-import           Data.Aeson.TH
 import           Data.Attoparsec.Text           hiding (take)
 import           Data.Functor                   (($>))
 import           Data.List                      (intercalate)
 import qualified Data.Text                      as T
 import qualified Language.C.Analysis.Light.Data as DATA
+-- import           Data.Aeson.TH
 
 type IDStr = T.Text
 type TypeStr = T.Text
@@ -28,7 +28,7 @@ type TypeStr = T.Text
 analyze :: T.Text -> Either String DATA.C
 analyze s = case parse (cParseStart <* endOfInput) s `feed` "" of
     (Done _ r)    -> Right r
-    (Fail i ss s) -> Left $ intercalate " : " ((show i):s:ss)
+    (Fail i ss w) -> Left $ intercalate " : " ((show i):w:ss)
     (Partial _)   -> Left "partial ..."
     where
         cParseStart = cLang Nothing
@@ -90,11 +90,11 @@ preIfState :: Parser T.Text
 preIfState = do
     preCond <- token $ string "#if"
     left    <- token identifire
-    exp     <- token $ string "=="
+    ex      <- token $ string "=="
     right   <- value
     takeTill isEndOfLine
     endOfLine
-    return $ T.intercalate " " [preCond, left, exp, right]
+    return $ T.intercalate " " [preCond, left, ex, right]
 
 -- | preproIfEnd
 --
@@ -156,6 +156,7 @@ initValue = Just <$> p <|> pure Nothing
 --
 -- TODO:
 -- token 関数は字句単位のパーサが処理すべき
+-- でもプリプロなどは改行が構文に含まれるためやっぱり無理かも？
 --
 identifire :: Parser T.Text
 identifire = do
@@ -172,6 +173,7 @@ pointer = string "*"
 --
 -- TODO:
 -- token 関数は字句単位のパーサが処理すべき
+-- でもプリプロなどは改行が構文に含まれるためやっぱり無理かも？
 --
 value :: Parser T.Text
 value = hex <|> (T.pack <$> many1 digit) <|> addressVal <|> identifire

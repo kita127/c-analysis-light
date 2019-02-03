@@ -9,6 +9,7 @@ module Language.C.Analysis.Light
 , identifire
 , value
 , arguments
+, preprocess
 , preproIfStart
 ) where
 
@@ -33,10 +34,32 @@ analyze s = case parse (cParseStart <* endOfInput) s `feed` "" of
     where
         cParseStart = cLang Nothing
 
---  cLang
+-- | cLang
 --
 cLang :: Maybe T.Text -> Parser DATA.C
-cLang pre = preproIfStart <|> statement pre <|> preproIfEnd <|> pure DATA.End
+cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure DATA.End
+
+-- | preprocess
+--
+preprocess :: Maybe T.Text -> Parser DATA.C
+preprocess pre = DATA.Prepro <$> pure Nothing <*> include <*> cLang pre
+
+
+-- | include
+--
+include :: Parser DATA.PreState
+include =  DATA.Include <$ token (string "#include") <*> file <* tillEndOfLine
+
+-- | file
+--
+file :: Parser T.Text
+file = string "<" `liftAp` identifire `liftAp` string ".h" `liftAp` string ">"
+
+
+-- | tillEndOfLine
+--
+tillEndOfLine :: Parser ()
+tillEndOfLine = takeTill isEndOfLine *> endOfLine
 
 -- | token
 --
@@ -85,6 +108,9 @@ preproIfStart = do
         p = preIfState
 
 -- | preIfState
+--
+-- TODO:
+-- tillEndOfLine に書き換える
 --
 preIfState :: Parser T.Text
 preIfState = do
@@ -198,3 +224,11 @@ hex = do
 --
 idLetter :: Parser Char
 idLetter = letter <|> digit <|> char '_'
+
+
+-- | liftAp
+--
+-- T.append の リフト関数
+--
+liftAp :: Parser T.Text -> Parser T.Text -> Parser T.Text
+liftAp = liftA2 T.append

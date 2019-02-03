@@ -22,6 +22,8 @@ main = do
       , testDefFunction
       , testArguments
 
+      , testPreprocess
+
       , testJustPreIf
       , testComment
       ]
@@ -364,5 +366,23 @@ testComment = TestList
               DATA.typ = ["MyType"]
             , DATA.name = "my_var"
             , DATA.initVal = Just "tmp_v"
+            }
+  ]
+
+
+
+
+-- | testPreprocess
+--
+testPreprocess :: Test
+testPreprocess = TestList
+  [ "testPreprocess include 1" ~:
+        (exRes $ parse (preprocess Nothing) "#include <stdio.h>\n" `feed` "") ~?= Right
+            DATA.Prepro {
+              DATA.prepro = Nothing
+            , DATA.contents = DATA.Include {
+                DATA.file = "<stdio.h>"
+              }
+            , DATA.next = DATA.End
             }
   ]

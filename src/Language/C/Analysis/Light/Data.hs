@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Language.C.Analysis.Light.Data
 ( C(..)
+, PreState(..)
 , Cstate(..)
 ) where
 
@@ -11,9 +12,9 @@ import qualified Data.Text            as T
 
 
 data C = Prepro
-         { prepro   :: Maybe T.Text
-         , contents :: T.Text
-         , next     :: C
+         { prepro     :: Maybe T.Text
+         , contents   :: PreState
+         , next       :: C
          }
        | Csrc
          { prepro     :: Maybe T.Text
@@ -23,6 +24,7 @@ data C = Prepro
        | End
     deriving (Eq, Show)
 
+data PreState = Include { file :: T.Text } deriving (Eq, Show)
 
 data Cstate = Var
               { typ     :: [T.Text]
@@ -38,5 +40,6 @@ data Cstate = Var
 
 -- TemplateHaskell
 deriveJSON defaultOptions ''C
+deriveJSON defaultOptions ''PreState
 deriveJSON defaultOptions ''Cstate
 

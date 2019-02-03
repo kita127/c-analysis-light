@@ -23,6 +23,7 @@ main = do
       , testArguments
 
       , testJustPreIf
+      , testComment
       ]
     return ()
 
@@ -332,3 +333,18 @@ testJustPreIf = TestList
             }
   ]
 
+
+
+
+-- | testComment
+--
+testComment :: Test
+testComment = TestList
+  [ "testComment normal 1" ~:
+        (exRes $ parse defVariable "/* comment */    MyType my_var = tmp_v;" `feed` "") ~?= Right
+            DATA.Var {
+              DATA.typ = ["MyType"]
+            , DATA.name = "my_var"
+            , DATA.initVal = Just "tmp_v"
+            }
+  ]

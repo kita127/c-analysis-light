@@ -41,14 +41,24 @@ cLang pre = preproIfStart <|> statement pre <|> preproIfEnd <|> pure DATA.End
 -- | token
 --
 token :: Parser a -> Parser a
-token p = many' space *> p <* many' space
+token p = spaceOrComment *> p <* spaceOrComment
 
--- | blanks
+-- | spaceOrComment
 --
--- 1つ以上のスペース
+spaceOrComment :: Parser ()
+spaceOrComment = skipMany $
+    space $> () <|> comment
+
+-- | comment
 --
-blanks :: Parser ()
-blanks = many1 space $> ()
+comment :: Parser ()
+comment = do
+    string "/*"
+    consume
+
+    where
+        consume = string "*/" $> () <|> anyChar *> consume
+
 
 -- | statement
 --
@@ -119,10 +129,10 @@ defVariable = do
 -- | initValue
 --
 initValue :: Parser (Maybe T.Text)
-initValue = token $ (Just <$> p) <|> pure Nothing
+initValue = Just <$> p <|> pure Nothing
     where
         p :: Parser T.Text
-        p = char '=' *> blanks *> value
+        p = token (char '=') *> token value
 
 -- | identifire
 --

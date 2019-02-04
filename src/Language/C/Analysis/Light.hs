@@ -18,6 +18,7 @@ import           Control.Applicative
 import           Data.Attoparsec.Text           hiding (take)
 import           Data.Functor                   (($>))
 import           Data.List                      (intercalate)
+import           Data.Monoid                    (mempty)
 import qualified Data.Text                      as T
 import qualified Language.C.Analysis.Light.Data as DATA
 -- import           Data.Aeson.TH
@@ -33,17 +34,17 @@ analyze s = case parse (cParseStart <* endOfInput) s `feed` "" of
     (Fail i ss w) -> Left $ intercalate " : " ((show i):w:ss)
     (Partial _)   -> Left "partial ..."
     where
-        cParseStart = cLang Nothing
+        cParseStart = cLang mempty
 
 -- | cLang
 --
-cLang :: Maybe T.Text -> Parser DATA.C
+cLang :: [T.Text] -> Parser DATA.C
 cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure DATA.End
 
 -- | preprocess
 --
-preprocess :: Maybe T.Text -> Parser DATA.C
-preprocess pre = DATA.Prepro <$> pure Nothing <*> include <*> cLang pre
+preprocess :: [T.Text] -> Parser DATA.C
+preprocess pre = DATA.Prepro <$> pure pre <*> include <*> cLang pre
 
 
 -- | include
@@ -92,7 +93,7 @@ comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
 
 -- | statement
 --
-statement :: Maybe T.Text -> Parser DATA.C
+statement :: [T.Text] -> Parser DATA.C
 statement pre =
         DATA.Csrc <$> pure pre <*> defVariable <*> cLang pre
     <|> DATA.Csrc <$> pure pre <*> defFunction <*> cLang pre
@@ -103,7 +104,7 @@ preproIfStart :: Parser DATA.C
 preproIfStart = do
     skipMany space
     s <- p
-    d <- statement (Just s)
+    d <- statement $ pure s
     return d
     where
         p = preIfState
@@ -124,7 +125,7 @@ preIfState = do
 preproIfEnd :: Parser DATA.C
 preproIfEnd = do
     token $ string "#endif"
-    cLang Nothing
+    cLang mempty
 
 
 -- | defFunction

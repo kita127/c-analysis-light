@@ -14,12 +14,12 @@ import qualified Data.Text            as T
 
 
 data C = Prepro
-         { prepro   :: Maybe T.Text
+         { prepro   :: [T.Text]
          , contents :: PreState
          , next     :: C
          }
        | Csrc
-         { prepro     :: Maybe T.Text
+         { prepro     :: [T.Text]
          , statements :: Cstate
          , next       :: C
          }
@@ -45,11 +45,13 @@ data Cstate = Var
             deriving (Eq, Show)
 
 data Proc = Call
-            { name :: T.Text
-            , args :: [T.Text]
+            { prepro :: [T.Text]
+            , name   :: T.Text
+            , args   :: [T.Text]
             }
           | Return
-            { value :: T.Text
+            { prepro :: [T.Text]
+            , value  :: T.Text
             }
           deriving (Eq, Show)
 

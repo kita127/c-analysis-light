@@ -317,7 +317,7 @@ testJustPreIf = TestList
   [ "testJustPreIf normal 1" ~:
         (exRes $ parse preproIfStart "#if PRE_VARI == 1\nint hoge;\n#endif" `feed` "") ~?= Right
             DATA.Csrc {
-              DATA.prepro = Just "#if PRE_VARI == 1"
+              DATA.prepro = ["#if PRE_VARI == 1"]
             , DATA.statements = DATA.Var {
                 DATA.typ = ["int"]
               , DATA.name = "hoge"
@@ -328,14 +328,14 @@ testJustPreIf = TestList
   , "testJustPreIf normal 2" ~:
         (exRes $ parse preproIfStart s_preIf_1 `feed` "") ~?= Right
             DATA.Csrc {
-              DATA.prepro = Just "#if PRE_VARI == 1"
+              DATA.prepro = ["#if PRE_VARI == 1"]
             , DATA.statements = DATA.Var {
                 DATA.typ = ["signed", "int"]
               , DATA.name = "pre_var"
               , DATA.initVal = Nothing
               }
             , DATA.next = DATA.Csrc {
-                DATA.prepro = Just "#if PRE_VARI == 1"
+                DATA.prepro = ["#if PRE_VARI == 1"]
               , DATA.statements = DATA.Var {
                   DATA.typ = ["unsigned", "char"]
                 , DATA.name = "pre_var2"
@@ -347,21 +347,21 @@ testJustPreIf = TestList
   , "testJustPreIf normal 3" ~:
         (exRes $ parse preproIfStart s_preIf_2 `feed` "") ~?= Right
             DATA.Csrc {
-              DATA.prepro = Just "#if PRE_VARI == 1"
+              DATA.prepro = ["#if PRE_VARI == 1"]
             , DATA.statements = DATA.Var {
                 DATA.typ = ["signed", "int"]
               , DATA.name = "pre_var"
               , DATA.initVal = Nothing
               }
             , DATA.next = DATA.Csrc {
-                DATA.prepro = Just "#if PRE_VARI == 1"
+                DATA.prepro = ["#if PRE_VARI == 1"]
               , DATA.statements = DATA.Var {
                   DATA.typ = ["unsigned", "char"]
                 , DATA.name = "pre_var2"
                 , DATA.initVal = Nothing
                 }
               , DATA.next = DATA.Csrc {
-                  DATA.prepro = Nothing
+                  DATA.prepro = []
                 , DATA.statements = DATA.Var {
                     DATA.typ = ["int"]
                   , DATA.name = "normal_var"
@@ -374,7 +374,7 @@ testJustPreIf = TestList
   , "testJustPreIf normal 4" ~:
         (exRes $ parse preproIfStart "\n#if HOGE_XXX == VARI1 \nint hoge;\n#endif    /* HOGE_XXX */\n" `feed` "") ~?= Right
             DATA.Csrc {
-              DATA.prepro = Just "#if HOGE_XXX == VARI1"
+              DATA.prepro = ["#if HOGE_XXX == VARI1"]
             , DATA.statements = DATA.Var {
                 DATA.typ = ["int"]
               , DATA.name = "hoge"
@@ -415,9 +415,9 @@ testComment = TestList
 testPreprocess :: Test
 testPreprocess = TestList
   [ "testPreprocess include 1" ~:
-        (exRes $ parse (preprocess Nothing) "#include <stdio.h>\n" `feed` "") ~?= Right
+        (exRes $ parse (preprocess []) "#include <stdio.h>\n" `feed` "") ~?= Right
             DATA.Prepro {
-              DATA.prepro = Nothing
+              DATA.prepro = []
             , DATA.contents = DATA.Include {
                 DATA.file = "<stdio.h>"
               }

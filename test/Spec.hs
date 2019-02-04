@@ -1,10 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE QuasiQuotes           #-}
 import           Data.Attoparsec.Text           hiding (take)
 import           Data.List                      (intercalate)
 import qualified Data.Text                      as T
 import           Language.C.Analysis.Light
 import qualified Language.C.Analysis.Light.Data as DATA
 import           Test.HUnit
+import           Text.RawString.QQ
 
 exRes :: Result a -> Either String a
 exRes (Done _ r)    = Right r
@@ -66,7 +69,14 @@ s_2 = "void\narg_func__1(    int arg1   )\n{\n}\n"
 --
 s_3 = "static int * mul_ret_arg_f ( char hoge, int *p_fuga )\n{\n}\n"
 
+s_4 = [r|
+int main( void )
+{
+    printf("Hellow World\n");
 
+    return (0);
+}
+|]
 
 --      void
 --  arg_Thogexxx__1  (    char arg1   )
@@ -74,6 +84,7 @@ s_3 = "static int * mul_ret_arg_f ( char hoge, int *p_fuga )\n{\n}\n"
 -- }
 --
 s_s_1 = "     void\n arg_Thogexxx__1  (    char arg1   )\n{\n}\n"
+
 
 
 testDefFunction :: Test
@@ -90,6 +101,7 @@ testDefFunction = TestList
                 , DATA.initVal = Nothing
                 }
               ]
+            , DATA.procs = []
             }
   , "testDefFunction normal 2" ~:
         (exRes $ parse defFunction s_2 `feed` "") ~?= Right
@@ -103,6 +115,7 @@ testDefFunction = TestList
                 , DATA.initVal = Nothing
                 }
               ]
+            , DATA.procs = []
             }
 
 -- static int * mul_ret_arg_f ( char hoge, int *p_fuga )
@@ -126,7 +139,31 @@ testDefFunction = TestList
                 , DATA.initVal = Nothing
                 }
               ]
+            , DATA.procs = []
             }
+
+--  , "testDefFunction normal 4" ~:
+--        (exRes $ parse defFunction s_4 `feed` "") ~?= Right
+--            DATA.Func {
+--              DATA.return = ["int"]
+--            , DATA.name   = "main"
+--            , DATA.args   = [
+--                DATA.Var {
+--                  DATA.typ = ["void"]
+--                , DATA.name = ""
+--                , DATA.initVal = Nothing
+--                }
+--              ]
+--            , DATA.procs = [
+--                DATA.Call {
+--                  DATA.name = "printf"
+--                , DATA.args = ["\"Hellow World\\n\""]
+--                }
+--              , DATA.Return {
+--                  DATA.value = "(0)"
+--                }
+--              ]
+--            }
 
   , "testDefFunction space 1" ~:
         (exRes $ parse defFunction s_s_1 `feed` "") ~?= Right
@@ -140,6 +177,7 @@ testDefFunction = TestList
                 , DATA.initVal = Nothing
                 }
               ]
+            , DATA.procs = []
             }
   ]
 

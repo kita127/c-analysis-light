@@ -1,5 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell       #-}
 module Language.C.Analysis.Light
 ( token
 , analyze
@@ -86,9 +87,6 @@ comment1 = do
 --
 -- // ~~~~~~~~~~~~~
 --
--- TODO:
--- tillEndOfLine で置き換える
---
 comment2 :: Parser ()
 comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
 
@@ -139,7 +137,7 @@ defFunction = do
     token $ char ')'
     token $ char '{'
     token $ char '}'
-    return $ DATA.Func ret name args
+    return $ DATA.Func ret name args []
 
 -- | arguments
 --

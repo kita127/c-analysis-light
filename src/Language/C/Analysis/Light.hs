@@ -86,6 +86,9 @@ comment1 = do
 --
 -- // ~~~~~~~~~~~~~
 --
+-- TODO:
+-- tillEndOfLine で置き換える
+--
 comment2 :: Parser ()
 comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
 

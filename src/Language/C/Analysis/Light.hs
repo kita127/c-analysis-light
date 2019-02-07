@@ -96,7 +96,7 @@ comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
 statement :: [T.Text] -> Parser DATA.C
 statement pre =
         DATA.Csrc <$> pure pre <*> defVariable <*> cLang pre
-    <|> DATA.Csrc <$> pure pre <*> defFunction <*> cLang pre
+    <|> DATA.Csrc <$> pure pre <*> defFunction pre <*> cLang pre
 
 -- | preproIfStart
 --
@@ -130,15 +130,34 @@ preproIfEnd = do
 
 -- | defFunction
 --
-defFunction :: Parser DATA.Cstate
-defFunction = do
+defFunction :: [T.Text] -> Parser DATA.Cstate
+defFunction pre = do
     (name, ret) <- typeAndID
     token $ char '('
     args <- arguments
     token $ char ')'
+    p <- block pre
+    return $ DATA.Func ret name args p
+
+-- | block
+--
+block :: [T.Text] -> Parser [DATA.Proc]
+block pre = do
     token $ char '{'
+    ps <- many' $ process pre
     token $ char '}'
-    return $ DATA.Func ret name args []
+    return ps
+
+-- | process
+--
+process :: [T.Text] -> Parser DATA.Proc
+process pre = do
+    f <- token $ string "printf"
+    token $ char '('
+    a <- token $ string "\"Hellow World\\n\""
+    token $ char ')'
+    token $ char ';'
+    return $ DATA.Call pre f [a]
 
 -- | arguments
 --

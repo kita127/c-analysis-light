@@ -74,7 +74,7 @@ int main( void )
 {
     printf("Hellow World\n");
 
-    return (0)
+    return (0);
 }
 |]
 

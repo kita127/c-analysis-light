@@ -164,6 +164,7 @@ funcReturn pre = do
     token $ char '('
     v <- token $ value
     token $ char ')'
+    token $ char ';'
     return $ DATA.Return pre v
 
 -- | callFunc

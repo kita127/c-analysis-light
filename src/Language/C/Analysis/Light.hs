@@ -154,7 +154,17 @@ block pre = do
 -- | process
 --
 process :: [T.Text] -> Parser DATA.Proc
-process pre = callFunc pre
+process pre = callFunc pre <|> funcReturn pre
+
+-- | funcReturn
+--
+funcReturn :: [T.Text] -> Parser DATA.Proc
+funcReturn pre = do
+    token $ string "return"
+    token $ char '('
+    v <- token $ value
+    token $ char ')'
+    return $ DATA.Return pre v
 
 -- | callFunc
 --

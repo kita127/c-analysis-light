@@ -73,6 +73,8 @@ s_4 = [r|
 int main( void )
 {
     printf("Hellow World\n");
+
+    return (0)
 }
 |]
 
@@ -157,6 +159,10 @@ testDefFunction = TestList
                   DATA.prepro = []
                 , DATA.name = "printf"
                 , DATA.args = ["\"Hellow World\\n\""]
+                }
+              , DATA.Return {
+                  DATA.prepro = []
+                , DATA.value = "0"
                 }
               ]
             }

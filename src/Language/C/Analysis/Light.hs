@@ -38,6 +38,9 @@ analyze s = case parse (cParseStart <* endOfInput) s `feed` "" of
 
 -- | cLang
 --
+-- TODO:
+-- pre の型をわかりやす名前に置き換えたい type PRE など
+--
 cLang :: [T.Text] -> Parser DATA.C
 cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure DATA.End
 
@@ -151,13 +154,26 @@ block pre = do
 -- | process
 --
 process :: [T.Text] -> Parser DATA.Proc
-process pre = do
-    f <- token $ string "printf"
+process pre = callFunc pre
+
+-- | callFunc
+--
+callFunc :: [T.Text] -> Parser DATA.Proc
+callFunc pre = do
+    f <- token $ identifire
     token $ char '('
-    a <- token $ string "\"Hellow World\\n\""
+    a <- strLiteral
     token $ char ')'
     token $ char ';'
     return $ DATA.Call pre f [a]
+
+
+
+-- | strLiteral
+--
+strLiteral :: Parser T.Text
+strLiteral = token $ do
+    string "\"" `liftAp` takeTill (== '"') `liftAp` "\""
 
 -- | arguments
 --

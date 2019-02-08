@@ -5,12 +5,14 @@ module Language.C.Analysis.Light.Data
 , PreState(..)
 , Cstate(..)
 , Proc(..)
+, Condition
 ) where
 
 import           Data.Aeson.TH
 import           Data.Attoparsec.Text hiding (take)
 import qualified Data.Text            as T
 
+type Condition = [T.Text]
 
 
 data C = Prepro

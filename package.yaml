@@ -30,6 +30,7 @@ library:
   - aeson
   - aeson-pretty
   - bytestring
+  - transformers
   ghc-options:
   - -Wall
 
@@ -62,3 +63,4 @@ tests:
     - text
     - attoparsec
     - raw-strings-qq
+    - transformers

@@ -83,7 +83,7 @@ comment2 = lift $ string "//" *> takeTill isEndOfLine *> endOfLine
 statement :: SParser DATA.C
 statement = do
         ps <- get
-        DATA.Csrc <$> pure ps <*> defVariable <*> cLang
+        DATA.Csrc <$> defVariable <*> cLang
     -- <|> DATA.Csrc <$> pure pre <*> defFunction pre <*> cLang pre
 
 
@@ -94,7 +94,8 @@ defVariable = do
     (name, types) <- typeAndID
     v <- initValue
     token $ lift $ char ';'
-    return $ DATA.Var types name v
+    s <- get
+    return $ DATA.Var s types name v
 
 
 -- | typeAndID

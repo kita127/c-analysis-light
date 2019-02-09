@@ -58,14 +58,16 @@ testComment = TestList
   [ "testComment normal 1" ~:
         (exRes $ stParse [] defVariable "/* comment */    MyType my_var = tmp_v;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["MyType"]
+              DATA.prepro = []
+            , DATA.typ = ["MyType"]
             , DATA.name = "my_var"
             , DATA.initVal = Just "tmp_v"
             }
   , "testComment normal 2" ~:
         (exRes $ stParse [] defVariable "    // comment\nMyType my_var = tmp_v;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["MyType"]
+              DATA.prepro = []
+            , DATA.typ = ["MyType"]
             , DATA.name = "my_var"
             , DATA.initVal = Just "tmp_v"
             }
@@ -245,21 +247,24 @@ testDefVariable = TestList
   [ "testDefVariable normal 1" ~:
         (exRes $ stParse [] defVariable "int hoge;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["int"]
+              DATA.prepro = []
+            , DATA.typ = ["int"]
             , DATA.name = "hoge"
             , DATA.initVal = Nothing
             }
   , "testDefVariable normal 2" ~:
         (exRes $ stParse [] defVariable "MyStruct st_var;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["MyStruct"]
+              DATA.prepro = []
+            , DATA.typ = ["MyStruct"]
             , DATA.name = "st_var"
             , DATA.initVal = Nothing
             }
   , "testDefVariable normal 3" ~:
         (exRes $ stParse [] defVariable "unsigned int  uint_var;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["unsigned", "int"]
+              DATA.prepro = []
+            , DATA.typ = ["unsigned", "int"]
             , DATA.name = "uint_var"
             , DATA.initVal = Nothing
             }
@@ -267,28 +272,32 @@ testDefVariable = TestList
   , "testDefVariable initial value 1" ~:
         (exRes $ stParse [] defVariable "Hoge yyy_abc = 100;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["Hoge"]
+              DATA.prepro = []
+            , DATA.typ = ["Hoge"]
             , DATA.name = "yyy_abc"
             , DATA.initVal = Just "100"
             }
   , "testDefVariable initial value 2" ~:
         (exRes $ stParse [] defVariable "Hoge     yyy_abc            =    100       ;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["Hoge"]
+              DATA.prepro = []
+            , DATA.typ = ["Hoge"]
             , DATA.name = "yyy_abc"
             , DATA.initVal = Just "100"
             }
   , "testDefVariable initial value 3" ~:
         (exRes $ stParse [] defVariable "char    foobar_xyz   =  VALUE;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["char"]
+              DATA.prepro = []
+            , DATA.typ = ["char"]
             , DATA.name = "foobar_xyz"
             , DATA.initVal = Just "VALUE"
             }
   , "testDefVariable initial value 4" ~:
         (exRes $ stParse [] defVariable "  static char    foobar_xyz   =  0xFFFF  ;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["static", "char"]
+              DATA.prepro = []
+            , DATA.typ = ["static", "char"]
             , DATA.name = "foobar_xyz"
             , DATA.initVal = Just "0xFFFF"
             }
@@ -296,14 +305,16 @@ testDefVariable = TestList
   , "testDefVariable pointer 1" ~:
         (exRes $ stParse [] defVariable "  signed int    *p_val_axz   =  &hoge  ;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["signed", "int", "*"]
+              DATA.prepro = []
+            , DATA.typ = ["signed", "int", "*"]
             , DATA.name = "p_val_axz"
             , DATA.initVal = Just "&hoge"
             }
   , "testDefVariable pointer 2" ~:
         (exRes $ stParse [] defVariable "  signed  * int    **p_val_00d4   =  &hoge  ;" `feed` "") ~?= Right
             DATA.Var {
-              DATA.typ = ["signed", "*", "int", "*", "*"]
+              DATA.prepro = []
+            , DATA.typ = ["signed", "*", "int", "*", "*"]
             , DATA.name = "p_val_00d4"
             , DATA.initVal = Just "&hoge"
             }

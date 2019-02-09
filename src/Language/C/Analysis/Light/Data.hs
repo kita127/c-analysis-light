@@ -21,8 +21,7 @@ data C = Prepro
          , next     :: C
          }
        | Csrc
-         { prepro     :: [T.Text]
-         , statements :: Cstate
+         { statements :: Cstate
          , next       :: C
          }
        | End
@@ -34,12 +33,14 @@ data PreState = Include { file :: T.Text } deriving (Eq, Show)
 -- typ -> type にしたい
 --
 data Cstate = Var
-              { typ     :: [T.Text]
+              { prepro  :: Condition
+              , typ     :: [T.Text]
               , name    :: T.Text
               , initVal :: Maybe T.Text
               }
             | Func
-              { return :: [T.Text]
+              { prepro :: Condition
+              , return :: [T.Text]
               , name   :: T.Text
               , args   :: [Cstate]
               , procs  :: [Proc]
@@ -47,12 +48,12 @@ data Cstate = Var
             deriving (Eq, Show)
 
 data Proc = Call
-            { prepro :: [T.Text]
+            { prepro :: Condition
             , name   :: T.Text
             , args   :: [T.Text]
             }
           | Return
-            { prepro :: [T.Text]
+            { prepro :: Condition
             , value  :: T.Text
             }
           deriving (Eq, Show)

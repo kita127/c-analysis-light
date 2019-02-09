@@ -23,8 +23,8 @@ main = do
       [ testSample
       --, testToken
       , testValue
+      , testIdentifire
       --, testDefVariable
-      --, testIdentifire
       --, testDefFunction
       --, testArguments
 
@@ -59,6 +59,17 @@ testValue = TestList
         (exRes $ stParse [] value "&hoge" `feed` "") ~?= Right "&hoge"
   ]
 
+
+
+testIdentifire :: Test
+testIdentifire = TestList
+  [ "testIdentifire normal 1" ~:
+        (exRes $ stParse [] identifire "hoge_var" `feed` "") ~?= Right "hoge_var"
+  , "testIdentifire include number 1" ~:
+        (exRes $ stParse [] identifire "bar123hoge" `feed` "") ~?= Right "bar123hoge"
+  , "testIdentifire first letter which is number 1" ~:
+        (exRes $ stParse [] identifire "999_error" `feed` "") ~?= Left "\"999_error\" : Failed reading: satisfy : '_'"
+  ]
 
 
 --testToken :: Test
@@ -274,15 +285,6 @@ int main( void )
 --            }
 --  ]
 --
---testIdentifire :: Test
---testIdentifire = TestList
---  [ "testIdentifire normal 1" ~:
---        (exRes $ parse identifire "hoge_var" `feed` "") ~?= Right "hoge_var"
---  , "testIdentifire include number 1" ~:
---        (exRes $ parse identifire "bar123hoge" `feed` "") ~?= Right "bar123hoge"
---  , "testIdentifire first letter which is number 1" ~:
---        (exRes $ parse identifire "999_error" `feed` "") ~?= Left "\"999_error\" : Failed reading: satisfy : '_'"
---  ]
 --
 --
 --

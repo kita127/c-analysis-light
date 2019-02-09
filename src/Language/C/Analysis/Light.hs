@@ -7,7 +7,7 @@ module Language.C.Analysis.Light
 --, statement
 --, defVariable
 --, defFunction
---, identifire
+, identifire
 , value
 --, arguments
 --, preprocess
@@ -104,7 +104,7 @@ idLetter = letter <|> digit <|> char '_'
 -- | pointer
 --
 pointer :: SParser T.Text
-pointer = lift $ string "*"
+pointer = token $ lift $ string "*"
 
 
 

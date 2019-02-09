@@ -3,9 +3,9 @@
 {-# LANGUAGE TemplateHaskell       #-}
 module Language.C.Analysis.Light
 ( analyze
---, token
+, token
 --, statement
---, defVariable
+, defVariable
 --, defFunction
 , identifire
 , value
@@ -53,9 +53,32 @@ cLang = statement <|> pure DATA.End
 
 -- | token
 --
-token :: Monad m => m a -> m a
-token = id
---token p = spaceOrComment *> p <* spaceOrComment
+token :: SParser a -> SParser a
+token p = spaceOrComment *> p <* spaceOrComment
+
+-- | spaceOrComment
+--
+spaceOrComment :: SParser ()
+spaceOrComment = skipMany $
+    lift space $> () <|> comment1 <|> comment2
+
+-- | comment1
+--
+comment1 :: SParser ()
+comment1 = do
+    lift $ string "/*"
+    lift consume
+
+    where
+        consume = string "*/" $> () <|> anyChar *> consume
+
+-- | comment2
+--
+-- // ~~~~~~~~~~~~~
+--
+comment2 :: SParser ()
+comment2 = lift $ string "//" *> takeTill isEndOfLine *> endOfLine
+
 
 
 -- | statement
@@ -73,7 +96,7 @@ defVariable :: SParser DATA.Cstate
 defVariable = do
     (name, types) <- typeAndID
     v <- initValue
-    lift $ char ';'
+    token $ lift $ char ';'
     return $ DATA.Var types name v
 
 
@@ -114,13 +137,13 @@ initValue :: SParser (Maybe T.Text)
 initValue = Just <$> p <|> pure Nothing
     where
         p :: SParser T.Text
-        p = token (lift $ char '=') *> token value
+        p = token (lift $ char '=') *> value
 
 
 -- | value
 --
 value :: SParser T.Text
-value = hex <|> lift (T.pack <$> many1 digit) <|> addressVal <|> identifire
+value = token $ hex <|> lift (T.pack <$> many1 digit) <|> addressVal <|> identifire
     where
         addressVal = do
             lift $ char '&'
@@ -163,29 +186,6 @@ hex = do
 --tillEndOfLine :: Parser ()
 --tillEndOfLine = takeTill isEndOfLine *> endOfLine
 --
---
----- | spaceOrComment
-----
---spaceOrComment :: Parser ()
---spaceOrComment = skipMany $
---    space $> () <|> comment1 <|> comment2
---
----- | comment1
-----
---comment1 :: Parser ()
---comment1 = do
---    string "/*"
---    consume
---
---    where
---        consume = string "*/" $> () <|> anyChar *> consume
---
----- | comment2
-----
----- // ~~~~~~~~~~~~~
-----
---comment2 :: Parser ()
---comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
 --
 
 

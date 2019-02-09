@@ -240,6 +240,13 @@ int main( void )
 --  ]
 
 
+testDefVariable_in1 = [r|
+#if HOGE_SW == 1
+
+char condition_variable;
+
+#endif    /* HOGE_SW */
+|]
 
 
 testDefVariable :: Test
@@ -317,6 +324,14 @@ testDefVariable = TestList
             , DATA.typ = ["signed", "*", "int", "*", "*"]
             , DATA.name = "p_val_00d4"
             , DATA.initVal = Just "&hoge"
+            }
+  , "testDefVariable prepro 1" ~:
+        (exRes $ stParse [] defVariable testDefVariable_in1 `feed` "") ~?= Right
+            DATA.Var {
+              DATA.prepro = ["#if HOGE_SW == 1"]
+            , DATA.typ = ["char"]
+            , DATA.name = "condition_variable"
+            , DATA.initVal = Nothing
             }
   ]
 

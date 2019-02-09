@@ -16,7 +16,8 @@ module Language.C.Analysis.Light
 
 import           Control.Applicative
 import           Control.Monad.Trans.Class      (lift)
-import           Control.Monad.Trans.State
+import           Control.Monad.Trans.State      (StateT, evalStateT, get,
+                                                 modify)
 import           Data.Attoparsec.Text           hiding (take)
 import           Data.Functor                   (($>))
 import           Data.List                      (intercalate)
@@ -77,12 +78,27 @@ comment2 :: SParser ()
 comment2 = lift $ string "//" *> takeTill isEndOfLine *> endOfLine
 
 
+-- | update
+--
+update :: SParser a -> SParser a
+update p = do
+    -- Start Check
+    ss <- token $ lift $ many' $ string "#if HOGE_SW == 1"
+    modify (++ ss)
+
+    r <- p
+
+    -- End Check
+    es <- token $ lift $ many' $ string "#endif"
+    modify (take (length ss - length es))
+    return r
+
+
 
 -- | statement
 --
 statement :: SParser DATA.C
 statement = do
-        ps <- get
         DATA.Csrc <$> defVariable <*> cLang
     -- <|> DATA.Csrc <$> pure pre <*> defFunction pre <*> cLang pre
 
@@ -90,7 +106,7 @@ statement = do
 -- | defVariable
 --
 defVariable :: SParser DATA.Cstate
-defVariable = do
+defVariable = update $ do
     (name, types) <- typeAndID
     v <- initValue
     token $ lift $ char ';'

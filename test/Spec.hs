@@ -328,7 +328,14 @@ testDefVariable = TestList
   , "testDefVariable prepro 1" ~:
         (exRes $ stParse [] defVariable testDefVariable_in1 `feed` "") ~?= Right
             DATA.Var {
-              DATA.prepro = ["#if HOGE_SW == 1"]
+              DATA.prepro = [
+                DATA.Condition {
+                  DATA.command = "#if"
+                , DATA.left = "HOGE_SW"
+                , DATA.op = "=="
+                , DATA.right = "1"
+                }
+            ]
             , DATA.typ = ["char"]
             , DATA.name = "condition_variable"
             , DATA.initVal = Nothing

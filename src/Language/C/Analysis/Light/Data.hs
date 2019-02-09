@@ -5,14 +5,20 @@ module Language.C.Analysis.Light.Data
 , PreState(..)
 , Cstate(..)
 , Proc(..)
-, Condition
+, Condition(..)
 ) where
 
 import           Data.Aeson.TH
 import           Data.Attoparsec.Text hiding (take)
 import qualified Data.Text            as T
 
-type Condition = [T.Text]
+data Condition = Condition
+                 { command :: T.Text
+                 , left    :: T.Text
+                 , op      :: T.Text
+                 , right   :: T.Text
+                 }
+                 deriving (Eq, Show)
 
 
 data C = Prepro
@@ -33,13 +39,13 @@ data PreState = Include { file :: T.Text } deriving (Eq, Show)
 -- typ -> type にしたい
 --
 data Cstate = Var
-              { prepro  :: Condition
+              { prepro  :: [Condition]
               , typ     :: [T.Text]
               , name    :: T.Text
               , initVal :: Maybe T.Text
               }
             | Func
-              { prepro :: Condition
+              { prepro :: [Condition]
               , return :: [T.Text]
               , name   :: T.Text
               , args   :: [Cstate]
@@ -48,17 +54,18 @@ data Cstate = Var
             deriving (Eq, Show)
 
 data Proc = Call
-            { prepro :: Condition
+            { prepro :: [Condition]
             , name   :: T.Text
             , args   :: [T.Text]
             }
           | Return
-            { prepro :: Condition
+            { prepro :: [Condition]
             , value  :: T.Text
             }
           deriving (Eq, Show)
 
 -- TemplateHaskell
+deriveJSON defaultOptions ''Condition
 deriveJSON defaultOptions ''C
 deriveJSON defaultOptions ''PreState
 deriveJSON defaultOptions ''Cstate

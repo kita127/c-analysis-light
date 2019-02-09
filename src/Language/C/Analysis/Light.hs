@@ -26,7 +26,7 @@ import qualified Data.Text                      as T
 import qualified Language.C.Analysis.Light.Data as DATA
 -- import           Data.Aeson.TH
 
-type SParser a = StateT DATA.Condition Parser a
+type SParser a = StateT [DATA.Condition] Parser a
 
 type IDStr = T.Text
 type TypeStr = T.Text
@@ -83,15 +83,30 @@ comment2 = lift $ string "//" *> takeTill isEndOfLine *> endOfLine
 update :: SParser a -> SParser a
 update p = do
     -- Start Check
-    ss <- token $ lift $ many' $ string "#if HOGE_SW == 1"
+    ss <- many' condStart
     modify (++ ss)
 
     r <- p
 
     -- End Check
-    es <- token $ lift $ many' $ string "#endif"
+    es <- many' condEnd
     modify (take (length ss - length es))
     return r
+
+-- | condStart
+--
+condStart :: SParser DATA.Condition
+condStart = do
+    c <- token $ lift $ string "#if"
+    l <- identifire
+    o <- token $ lift $ string "=="
+    r <- value
+    return $ DATA.Condition c l o r
+
+-- | condEnd
+--
+condEnd :: SParser ()
+condEnd = token $ lift $ string "#endif" *> pure ()
 
 
 

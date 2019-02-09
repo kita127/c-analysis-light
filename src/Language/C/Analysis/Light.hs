@@ -43,9 +43,6 @@ analyze s = case parse (p <* endOfInput) s `feed` "" of
 
 -- | cLang
 --
--- TODO:
--- pre の型をわかりやす名前に置き換えたい type PRE など
---
 cLang :: SParser DATA.C
 cLang = statement <|> pure DATA.End
 --cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure DATA.End

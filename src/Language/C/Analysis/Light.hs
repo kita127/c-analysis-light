@@ -266,7 +266,8 @@ block = do
 -- | process
 --
 process :: SParser DATA.Proc
-process = funcReturn <|> callFunc
+process = funcReturn <|> callFunc <|> localVariable
+
 
 -- | funcReturn
 --
@@ -285,7 +286,7 @@ funcReturn = update $ do
 --
 callFunc :: SParser DATA.Proc
 callFunc = update $ do
-    f <- token $ identifire
+    f <- identifire
     token $ lift $ char '('
     a <- strLiteral
     token $ lift $ char ')'
@@ -298,6 +299,16 @@ callFunc = update $ do
 strLiteral :: SParser T.Text
 strLiteral = token $ lift $ do
     string "\"" `liftAp` takeTill (== '"') `liftAp` "\""
+
+-- | localVariable
+--
+localVariable :: SParser DATA.Proc
+localVariable = update $ do
+    v <- defVariable
+    s <- get
+    return $ DATA.LVar s v
+
+
 
 
 -- | liftAp

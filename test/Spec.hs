@@ -238,21 +238,37 @@ int main( void )
                 }
               ]
             }
-
---  , "testDefFunction space 1" ~:
---        (exRes $ parse (defFunction []) s_s_1 `feed` "") ~?= Right
---            DATA.Func {
---              DATA.return = ["void"]
---            , DATA.name   = "arg_Thogexxx__1"
---            , DATA.args   = [
---                DATA.Var {
---                  DATA.typ = ["char"]
---                , DATA.name = "arg1"
---                , DATA.initVal = Nothing
---                }
---              ]
---            , DATA.procs = []
---            }
+  , "testDefFunction normal 5" ~:
+        (exRes $ stParse [] defFunction [r|
+void func( void )
+{
+    int local_var;
+}
+|] `feed` "") ~?= Right
+            DATA.Func {
+              DATA.prepro = []
+            , DATA.return = ["void"]
+            , DATA.name   = "func"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.prepro = []
+                , DATA.typ = ["void"]
+                , DATA.name = ""
+                , DATA.initVal = Nothing
+                }
+              ]
+            , DATA.procs = [
+                DATA.LVar {
+                  DATA.prepro = []
+                , DATA.var = DATA.Var {
+                    DATA.prepro = []
+                  , DATA.typ = ["int"]
+                  , DATA.name = "local_var"
+                  , DATA.initVal = Nothing
+                  }
+                }
+              ]
+            }
   ]
 
 

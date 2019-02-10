@@ -34,7 +34,7 @@ data C = Prepro
 
 data PreState = Include
                 { prepro :: [Condition]
-                , file :: T.Text
+                , file   :: T.Text
                 }
               deriving (Eq, Show)
 
@@ -64,6 +64,10 @@ data Proc = Call
           | Return
             { prepro :: [Condition]
             , value  :: T.Text
+            }
+          | LVar
+            { prepro  :: [Condition]
+            , var     :: Cstate
             }
           deriving (Eq, Show)
 

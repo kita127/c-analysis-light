@@ -9,3 +9,9 @@ static xxx_condVar = 100;
 
 /* definition global variable */
 int global_variable = 99;
+
+
+void func_01( void )
+{
+    /* function process */
+}

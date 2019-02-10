@@ -6,7 +6,7 @@ module Language.C.Analysis.Light
 , token
 --, statement
 , defVariable
---, defFunction
+, defFunction
 , identifire
 , value
 --, arguments
@@ -80,6 +80,9 @@ comment2 = lift $ string "//" *> takeTill isEndOfLine *> endOfLine
 
 -- | update
 --
+-- TODO:
+-- プリプロ最後改行きたかでパースしてないので対応する
+--
 update :: SParser a -> SParser a
 update p = do
     -- Start Check
@@ -113,9 +116,9 @@ condEnd = token $ lift $ string "#endif" *> pure ()
 -- | statement
 --
 statement :: SParser DATA.C
-statement = do
+statement =
         DATA.Csrc <$> defVariable <*> cLang
-    -- <|> DATA.Csrc <$> pure pre <*> defFunction pre <*> cLang pre
+    <|> DATA.Csrc <$> defFunction <*> cLang
 
 
 -- | defVariable
@@ -191,6 +194,95 @@ hex = do
         p = lift $ many1 $ satisfy $ inClass "a-fA-F0-9"
 
 
+-- | defFunction
+--
+defFunction :: SParser DATA.Cstate
+defFunction = do
+    (name, ret) <- typeAndID
+    token $ lift $ char '('
+    args <- arguments
+    token $ lift $ char ')'
+    p <- block
+    s <- get
+    return $ DATA.Func s ret name args p
+
+
+-- | arguments
+--
+arguments :: SParser [DATA.Cstate]
+arguments = void <|> justArgs
+    where
+        void :: SParser [DATA.Cstate]
+        void = do
+            token $ lift $ string "void"
+            s <- get
+            return $ [ DATA.Var s ["void"] "" Nothing ]
+
+-- | justArgs
+--
+justArgs :: SParser [DATA.Cstate]
+justArgs = (`sepBy1` comma) $ do
+    (name, types) <- typeAndID
+    s <- get
+    return $ DATA.Var s types name Nothing
+    where
+        comma = lift $ char ','
+
+
+-- | block
+--
+block :: SParser [DATA.Proc]
+block = do
+    token $ lift $ char '{'
+    ps <- many' $ process
+    token $ lift $ char '}'
+    return ps
+
+
+-- | process
+--
+process :: SParser DATA.Proc
+process = funcReturn <|> callFunc
+
+-- | funcReturn
+--
+funcReturn :: SParser DATA.Proc
+funcReturn = update $ do
+    token $ lift $ string "return"
+    token $ lift $ char '('
+    v <- token $ value
+    token $ lift $ char ')'
+    token $ lift $ char ';'
+    s <- get
+    return $ DATA.Return s v
+
+
+-- | callFunc
+--
+callFunc :: SParser DATA.Proc
+callFunc = update $ do
+    f <- token $ identifire
+    token $ lift $ char '('
+    a <- strLiteral
+    token $ lift $ char ')'
+    token $ lift $ char ';'
+    s <- get
+    return $ DATA.Call s f [a]
+
+-- | strLiteral
+--
+strLiteral :: SParser T.Text
+strLiteral = token $ lift $ do
+    string "\"" `liftAp` takeTill (== '"') `liftAp` "\""
+
+
+-- | liftAp
+--
+-- T.append の リフト関数
+--
+liftAp :: Parser T.Text -> Parser T.Text -> Parser T.Text
+liftAp = liftA2 T.append
+
 
 
 ---- | preprocess
@@ -248,82 +340,5 @@ hex = do
 --    cLang mempty
 --
 --
----- | defFunction
-----
---defFunction :: [T.Text] -> Parser DATA.Cstate
---defFunction pre = do
---    (name, ret) <- typeAndID
---    token $ char '('
---    args <- arguments
---    token $ char ')'
---    p <- block pre
---    return $ DATA.Func ret name args p
---
----- | block
-----
---block :: [T.Text] -> Parser [DATA.Proc]
---block pre = do
---    token $ char '{'
---    ps <- many' $ process pre
---    token $ char '}'
---    return ps
---
----- | process
-----
---process :: [T.Text] -> Parser DATA.Proc
---process pre = callFunc pre <|> funcReturn pre
---
----- | funcReturn
-----
---funcReturn :: [T.Text] -> Parser DATA.Proc
---funcReturn pre = do
---    token $ string "return"
---    token $ char '('
---    v <- token $ value
---    token $ char ')'
---    token $ char ';'
---    return $ DATA.Return pre v
---
----- | callFunc
-----
---callFunc :: [T.Text] -> Parser DATA.Proc
---callFunc pre = do
---    f <- token $ identifire
---    token $ char '('
---    a <- strLiteral
---    token $ char ')'
---    token $ char ';'
---    return $ DATA.Call pre f [a]
 --
 --
---
----- | strLiteral
-----
---strLiteral :: Parser T.Text
---strLiteral = token $ do
---    string "\"" `liftAp` takeTill (== '"') `liftAp` "\""
---
----- | arguments
-----
---arguments :: Parser [DATA.Cstate]
---arguments = void <|> justArgs
---    where
---        void = token (string "void") $>
---            [DATA.Var {DATA.typ = ["void"], DATA.name = "", DATA.initVal = Nothing}]
---
---        justArgs = (flip sepBy1) (char ',') $ do
---            (name, types) <- typeAndID
---            return $ DATA.Var types name Nothing
---
---
---
---
---
---
---
----- | liftAp
-----
----- T.append の リフト関数
-----
---liftAp :: Parser T.Text -> Parser T.Text -> Parser T.Text
---liftAp = liftA2 T.append

@@ -26,7 +26,7 @@ main = do
       , testValue
       , testIdentifire
       , testDefVariable
-      --, testDefFunction
+      , testDefFunction
       --, testArguments
 
       --, testPreprocess
@@ -105,25 +105,23 @@ testIdentifire = TestList
 
 -- | testDefFunction input
 --
-
--- void hoge_func( void )
--- {
--- }
+-- | 1
 --
-s_1 = "void hoge_func( void )\n{\n}\n"
+testDefFunction_in1 = [r|
+void hoge_func( void )
+{
+}
+|]
 
--- void
--- arg_func__1(    int arg1   )
--- {
--- }
+-- | 2
 --
-s_2 = "void\narg_func__1(    int arg1   )\n{\n}\n"
+testDefFunction_in2 = [r|
+void hoge_func__1(    int arg1   )
+{
 
--- static int * mul_ret_arg_f ( char hoge, int *p_fuga )
--- {
--- }
---
-s_3 = "static int * mul_ret_arg_f ( char hoge, int *p_fuga )\n{\n}\n"
+}
+|]
+
 
 s_4 = [r|
 int main( void )
@@ -134,95 +132,104 @@ int main( void )
 }
 |]
 
-----      void
-----  arg_Thogexxx__1  (    char arg1   )
----- {
----- }
-----
---s_s_1 = "     void\n arg_Thogexxx__1  (    char arg1   )\n{\n}\n"
---
---
---
---testDefFunction :: Test
---testDefFunction = TestList
---  [ "testDefFunction normal 1" ~:
---        (exRes $ parse (defFunction []) s_1 `feed` "") ~?= Right
---            DATA.Func {
---              DATA.return = ["void"]
---            , DATA.name   = "hoge_func"
---            , DATA.args   = [
---                DATA.Var {
---                  DATA.typ = ["void"]
---                , DATA.name = ""
---                , DATA.initVal = Nothing
---                }
---              ]
---            , DATA.procs = []
---            }
---  , "testDefFunction normal 2" ~:
---        (exRes $ parse (defFunction []) s_2 `feed` "") ~?= Right
---            DATA.Func {
---              DATA.return = ["void"]
---            , DATA.name   = "arg_func__1"
---            , DATA.args   = [
---                DATA.Var {
---                  DATA.typ = ["int"]
---                , DATA.name = "arg1"
---                , DATA.initVal = Nothing
---                }
---              ]
---            , DATA.procs = []
---            }
---
----- static int * mul_ret_arg_f ( char hoge, int *p_fuga )
----- {
----- }
-----
---  , "testDefFunction normal 3" ~:
---        (exRes $ parse (defFunction []) s_3 `feed` "") ~?= Right
---            DATA.Func {
---              DATA.return = ["static", "int", "*"]
---            , DATA.name   = "mul_ret_arg_f"
---            , DATA.args   = [
---                DATA.Var {
---                  DATA.typ = ["char"]
---                , DATA.name = "hoge"
---                , DATA.initVal = Nothing
---                }
---              , DATA.Var {
---                  DATA.typ = ["int", "*"]
---                , DATA.name = "p_fuga"
---                , DATA.initVal = Nothing
---                }
---              ]
---            , DATA.procs = []
---            }
---
---  , "testDefFunction normal 4" ~:
---        (exRes $ parse (defFunction []) s_4 `feed` "") ~?= Right
---            DATA.Func {
---              DATA.return = ["int"]
---            , DATA.name   = "main"
---            , DATA.args   = [
---                DATA.Var {
---                  DATA.typ = ["void"]
---                , DATA.name = ""
---                , DATA.initVal = Nothing
---                }
---              ]
---            , DATA.procs = [
---                DATA.Call {
---                  DATA.prepro = []
---                , DATA.name = "printf"
---                , DATA.args = ["\"Hellow World\\n\""]
---                }
---              , DATA.Return {
---                  DATA.prepro = []
---                , DATA.value = "0"
---                }
---              ]
---            }
---
+
+
+testDefFunction :: Test
+testDefFunction = TestList
+  [ "testDefFunction normal 1" ~:
+        (exRes $ stParse [] defFunction testDefFunction_in1 `feed` "") ~?= Right
+            DATA.Func {
+              DATA.prepro = []
+            , DATA.return = ["void"]
+            , DATA.name   = "hoge_func"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.prepro = []
+                , DATA.typ = ["void"]
+                , DATA.name = ""
+                , DATA.initVal = Nothing
+                }
+              ]
+            , DATA.procs = []
+            }
+  , "testDefFunction normal 2" ~:
+        (exRes $ stParse [] defFunction testDefFunction_in2 `feed` "") ~?= Right
+            DATA.Func {
+              DATA.prepro = []
+            , DATA.return = ["void"]
+            , DATA.name   = "hoge_func__1"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.prepro = []
+                , DATA.typ = ["int"]
+                , DATA.name = "arg1"
+                , DATA.initVal = Nothing
+                }
+              ]
+            , DATA.procs = []
+            }
+
+  , "testDefFunction normal 3" ~:
+        (exRes $ stParse [] defFunction [r|
+static int * mul_ret_arg_f ( char hoge, int *p_fuga )
+{
+}
+|] `feed` "") ~?= Right
+            DATA.Func {
+              DATA.prepro = []
+            , DATA.return = ["static", "int", "*"]
+            , DATA.name   = "mul_ret_arg_f"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.prepro = []
+                , DATA.typ = ["char"]
+                , DATA.name = "hoge"
+                , DATA.initVal = Nothing
+                }
+              , DATA.Var {
+                  DATA.prepro = []
+                , DATA.typ = ["int", "*"]
+                , DATA.name = "p_fuga"
+                , DATA.initVal = Nothing
+                }
+              ]
+            , DATA.procs = []
+            }
+
+  , "testDefFunction normal 4" ~:
+        (exRes $ stParse [] defFunction [r|
+int main( void )
+{
+    printf("Hellow World\n");
+
+    return (0);
+}
+|] `feed` "") ~?= Right
+            DATA.Func {
+              DATA.prepro = []
+            , DATA.return = ["int"]
+            , DATA.name   = "main"
+            , DATA.args   = [
+                DATA.Var {
+                  DATA.prepro = []
+                , DATA.typ = ["void"]
+                , DATA.name = ""
+                , DATA.initVal = Nothing
+                }
+              ]
+            , DATA.procs = [
+                DATA.Call {
+                  DATA.prepro = []
+                , DATA.name = "printf"
+                , DATA.args = ["\"Hellow World\\n\""]
+                }
+              , DATA.Return {
+                  DATA.prepro = []
+                , DATA.value = "0"
+                }
+              ]
+            }
+
 --  , "testDefFunction space 1" ~:
 --        (exRes $ parse (defFunction []) s_s_1 `feed` "") ~?= Right
 --            DATA.Func {
@@ -237,7 +244,7 @@ int main( void )
 --              ]
 --            , DATA.procs = []
 --            }
---  ]
+  ]
 
 
 testDefVariable_in1 = [r|

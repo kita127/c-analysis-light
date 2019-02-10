@@ -9,7 +9,7 @@ module Language.C.Analysis.Light
 , defFunction
 , identifire
 , value
---, arguments
+, include
 --, preprocess
 --, preproIfStart
 ) where
@@ -45,8 +45,32 @@ analyze s = case parse (p <* endOfInput) s `feed` "" of
 -- | cLang
 --
 cLang :: SParser DATA.C
-cLang = statement <|> pure DATA.End
+cLang = preprocess <|> statement <|> pure DATA.End
 --cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure DATA.End
+
+-- | preprocess
+--
+preprocess :: SParser DATA.C
+preprocess = DATA.Prepro <$> include <*> cLang
+
+
+-- | include
+--
+include :: SParser DATA.PreState
+include =  DATA.Include <$> get <* token (lift $ string "#include") <*> file <* tillEndOfLine
+
+-- | file
+--
+file :: SParser T.Text
+file = lift (string "<") `liftAp` identifire `liftAp` lift (string ".h") `liftAp` lift (string ">")
+
+
+-- | tillEndOfLine
+--
+tillEndOfLine :: SParser ()
+tillEndOfLine = lift $ takeTill isEndOfLine *> endOfLine
+
+
 
 
 -- | token
@@ -280,7 +304,7 @@ strLiteral = token $ lift $ do
 --
 -- T.append の リフト関数
 --
-liftAp :: Parser T.Text -> Parser T.Text -> Parser T.Text
+liftAp :: Applicative f => f T.Text -> f T.Text -> f T.Text
 liftAp = liftA2 T.append
 
 
@@ -291,21 +315,6 @@ liftAp = liftA2 T.append
 --preprocess pre = DATA.Prepro <$> pure pre <*> include <*> cLang pre
 --
 --
----- | include
-----
---include :: Parser DATA.PreState
---include =  DATA.Include <$ token (string "#include") <*> file <* tillEndOfLine
---
----- | file
-----
---file :: Parser T.Text
---file = string "<" `liftAp` identifire `liftAp` string ".h" `liftAp` string ">"
---
---
----- | tillEndOfLine
-----
---tillEndOfLine :: Parser ()
---tillEndOfLine = takeTill isEndOfLine *> endOfLine
 --
 --
 

@@ -27,6 +27,7 @@ main = do
       , testIdentifire
       , testDefVariable
       , testDefFunction
+      , testInclude
       --, testArguments
 
       --, testPreprocess
@@ -74,6 +75,20 @@ testComment = TestList
   ]
 
 
+-- | testInclude
+--
+testInclude :: Test
+testInclude = TestList
+  [ "testInclude normal 1" ~:
+        (exRes $ stParse [] include "#include    <stdio.h>      \n" `feed` "") ~?= Right
+            DATA.Include {
+              DATA.prepro = []
+            , DATA.file = "<stdio.h>"
+            }
+  , "testInclude error 1" ~:
+        (exRes $ stParse [] include "#include    <stdio.h>" `feed` "") ~?= Left "\"\" : not enough input"
+  ]
+
 
 testValue :: Test
 testValue = TestList
@@ -88,6 +103,7 @@ testValue = TestList
   , "testValue address 1" ~:
         (exRes $ stParse [] value "&hoge" `feed` "") ~?= Right "&hoge"
   ]
+
 
 
 
@@ -123,14 +139,7 @@ void hoge_func__1(    int arg1   )
 |]
 
 
-s_4 = [r|
-int main( void )
-{
-    printf("Hellow World\n");
 
-    return (0);
-}
-|]
 
 
 

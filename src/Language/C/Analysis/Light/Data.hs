@@ -22,8 +22,7 @@ data Condition = Condition
 
 
 data C = Prepro
-         { prepro   :: [T.Text]
-         , contents :: PreState
+         { contents :: PreState
          , next     :: C
          }
        | Csrc
@@ -33,7 +32,11 @@ data C = Prepro
        | End
     deriving (Eq, Show)
 
-data PreState = Include { file :: T.Text } deriving (Eq, Show)
+data PreState = Include
+                { prepro :: [Condition]
+                , file :: T.Text
+                }
+              deriving (Eq, Show)
 
 -- TODO:
 -- typ -> type にしたい

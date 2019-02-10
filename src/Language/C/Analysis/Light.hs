@@ -23,10 +23,10 @@ import           Data.Functor                   (($>))
 import           Data.List                      (intercalate)
 import           Data.Monoid                    (mempty)
 import qualified Data.Text                      as T
-import qualified Language.C.Analysis.Light.Data as DATA
+import qualified Language.C.Analysis.Light.Data as D
 -- import           Data.Aeson.TH
 
-type SParser a = StateT [DATA.Condition] Parser a
+type SParser a = StateT [D.Condition] Parser a
 
 type IDStr = T.Text
 type TypeStr = T.Text
@@ -34,7 +34,7 @@ type TypeStr = T.Text
 
 -- | analyze
 --
-analyze :: T.Text -> Either String DATA.C
+analyze :: T.Text -> Either String D.C
 analyze s = case parse (p <* endOfInput) s `feed` "" of
     (Done _ r)    -> Right r
     (Fail i ss w) -> Left $ intercalate " : " ((show i):w:ss)
@@ -44,20 +44,20 @@ analyze s = case parse (p <* endOfInput) s `feed` "" of
 
 -- | cLang
 --
-cLang :: SParser DATA.C
-cLang = preprocess <|> statement <|> pure DATA.End
---cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure DATA.End
+cLang :: SParser D.C
+cLang = preprocess <|> statement <|> pure D.End
+--cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure D.End
 
 -- | preprocess
 --
-preprocess :: SParser DATA.C
-preprocess = DATA.Prepro <$> include <*> cLang
+preprocess :: SParser D.C
+preprocess = D.Prepro <$> include <*> cLang
 
 
 -- | include
 --
-include :: SParser DATA.PreState
-include =  DATA.Include <$> get <* token (lift $ string "#include") <*> file <* tillEndOfLine
+include :: SParser D.PreState
+include =  D.Include <$> get <* token (lift $ string "#include") <*> file <* tillEndOfLine
 
 -- | file
 --
@@ -122,13 +122,13 @@ update p = do
 
 -- | condStart
 --
-condStart :: SParser DATA.Condition
+condStart :: SParser D.Condition
 condStart = do
     c <- token $ lift $ string "#if"
     l <- identifire
     o <- token $ lift $ string "=="
     r <- value
-    return $ DATA.Condition c l o r
+    return $ D.Condition c l o r
 
 -- | condEnd
 --
@@ -139,21 +139,21 @@ condEnd = token $ lift $ string "#endif" *> pure ()
 
 -- | statement
 --
-statement :: SParser DATA.C
+statement :: SParser D.C
 statement =
-        DATA.Csrc <$> defVariable <*> cLang
-    <|> DATA.Csrc <$> defFunction <*> cLang
+        D.Csrc <$> defVariable <*> cLang
+    <|> D.Csrc <$> defFunction <*> cLang
 
 
 -- | defVariable
 --
-defVariable :: SParser DATA.Cstate
+defVariable :: SParser D.Cstate
 defVariable = update $ do
     (name, types) <- typeAndID
     v <- initValue
     token $ lift $ char ';'
     s <- get
-    return $ DATA.Var s types name v
+    return $ D.Var s types name v
 
 
 -- | typeAndID
@@ -220,7 +220,7 @@ hex = do
 
 -- | defFunction
 --
-defFunction :: SParser DATA.Cstate
+defFunction :: SParser D.Cstate
 defFunction = do
     (name, ret) <- typeAndID
     token $ lift $ char '('
@@ -228,34 +228,34 @@ defFunction = do
     token $ lift $ char ')'
     p <- block
     s <- get
-    return $ DATA.Func s ret name args p
+    return $ D.Func s ret name args p
 
 
 -- | arguments
 --
-arguments :: SParser [DATA.Cstate]
+arguments :: SParser [D.Cstate]
 arguments = void <|> justArgs
     where
-        void :: SParser [DATA.Cstate]
+        void :: SParser [D.Cstate]
         void = do
             token $ lift $ string "void"
             s <- get
-            return $ [ DATA.Var s ["void"] "" Nothing ]
+            return $ [ D.Var s ["void"] "" Nothing ]
 
 -- | justArgs
 --
-justArgs :: SParser [DATA.Cstate]
+justArgs :: SParser [D.Cstate]
 justArgs = (`sepBy1` comma) $ do
     (name, types) <- typeAndID
     s <- get
-    return $ DATA.Var s types name Nothing
+    return $ D.Var s types name Nothing
     where
         comma = lift $ char ','
 
 
 -- | block
 --
-block :: SParser [DATA.Proc]
+block :: SParser [D.Proc]
 block = do
     token $ lift $ char '{'
     ps <- many' $ process
@@ -265,13 +265,13 @@ block = do
 
 -- | process
 --
-process :: SParser DATA.Proc
+process :: SParser D.Proc
 process = funcReturn <|> callFunc <|> localVariable
 
 
 -- | funcReturn
 --
-funcReturn :: SParser DATA.Proc
+funcReturn :: SParser D.Proc
 funcReturn = update $ do
     token $ lift $ string "return"
     token $ lift $ char '('
@@ -279,12 +279,12 @@ funcReturn = update $ do
     token $ lift $ char ')'
     token $ lift $ char ';'
     s <- get
-    return $ DATA.Return s v
+    return $ D.Return s v
 
 
 -- | callFunc
 --
-callFunc :: SParser DATA.Proc
+callFunc :: SParser D.Proc
 callFunc = update $ do
     f <- identifire
     token $ lift $ char '('
@@ -292,7 +292,7 @@ callFunc = update $ do
     token $ lift $ char ')'
     token $ lift $ char ';'
     s <- get
-    return $ DATA.Call s f [a]
+    return $ D.Call s f [a]
 
 -- | strLiteral
 --
@@ -302,11 +302,11 @@ strLiteral = token $ lift $ do
 
 -- | localVariable
 --
-localVariable :: SParser DATA.Proc
+localVariable :: SParser D.Proc
 localVariable = update $ do
     v <- defVariable
     s <- get
-    return $ DATA.LVar s v
+    return $ D.LVar s v
 
 
 
@@ -322,8 +322,8 @@ liftAp = liftA2 T.append
 
 ---- | preprocess
 ----
---preprocess :: [T.Text] -> Parser DATA.C
---preprocess pre = DATA.Prepro <$> pure pre <*> include <*> cLang pre
+--preprocess :: [T.Text] -> Parser D.C
+--preprocess pre = D.Prepro <$> pure pre <*> include <*> cLang pre
 --
 --
 --
@@ -332,7 +332,7 @@ liftAp = liftA2 T.append
 
 ---- | preproIfStart
 ----
---preproIfStart :: Parser DATA.C
+--preproIfStart :: Parser D.C
 --preproIfStart = do
 --    skipMany space
 --    s <- p
@@ -354,7 +354,7 @@ liftAp = liftA2 T.append
 --
 ---- | preproIfEnd
 ----
---preproIfEnd :: Parser DATA.C
+--preproIfEnd :: Parser D.C
 --preproIfEnd = do
 --    token $ string "#endif"
 --    cLang mempty

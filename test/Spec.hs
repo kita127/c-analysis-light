@@ -6,7 +6,7 @@ import           Data.Attoparsec.Text           hiding (take)
 import           Data.List                      (intercalate)
 import qualified Data.Text                      as T
 import           Language.C.Analysis.Light
-import qualified Language.C.Analysis.Light.Data as DATA
+import qualified Language.C.Analysis.Light.Data as D
 import           Test.HUnit
 import           Text.RawString.QQ
 
@@ -58,19 +58,19 @@ testComment :: Test
 testComment = TestList
   [ "testComment normal 1" ~:
         (exRes $ stParse [] defVariable "/* comment */    MyType my_var = tmp_v;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["MyType"]
-            , DATA.name = "my_var"
-            , DATA.initVal = Just "tmp_v"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["MyType"]
+            , D.name = "my_var"
+            , D.initVal = Just "tmp_v"
             }
   , "testComment normal 2" ~:
         (exRes $ stParse [] defVariable "    // comment\nMyType my_var = tmp_v;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["MyType"]
-            , DATA.name = "my_var"
-            , DATA.initVal = Just "tmp_v"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["MyType"]
+            , D.name = "my_var"
+            , D.initVal = Just "tmp_v"
             }
   ]
 
@@ -81,9 +81,9 @@ testInclude :: Test
 testInclude = TestList
   [ "testInclude normal 1" ~:
         (exRes $ stParse [] include "#include    <stdio.h>      \n" `feed` "") ~?= Right
-            DATA.Include {
-              DATA.prepro = []
-            , DATA.file = "<stdio.h>"
+            D.Include {
+              D.prepro = []
+            , D.file = "<stdio.h>"
             }
   , "testInclude error 1" ~:
         (exRes $ stParse [] include "#include    <stdio.h>" `feed` "") ~?= Left "\"\" : not enough input"
@@ -147,35 +147,35 @@ testDefFunction :: Test
 testDefFunction = TestList
   [ "testDefFunction normal 1" ~:
         (exRes $ stParse [] defFunction testDefFunction_in1 `feed` "") ~?= Right
-            DATA.Func {
-              DATA.prepro = []
-            , DATA.return = ["void"]
-            , DATA.name   = "hoge_func"
-            , DATA.args   = [
-                DATA.Var {
-                  DATA.prepro = []
-                , DATA.typ = ["void"]
-                , DATA.name = ""
-                , DATA.initVal = Nothing
+            D.Func {
+              D.prepro = []
+            , D.return = ["void"]
+            , D.name   = "hoge_func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
                 }
               ]
-            , DATA.procs = []
+            , D.procs = []
             }
   , "testDefFunction normal 2" ~:
         (exRes $ stParse [] defFunction testDefFunction_in2 `feed` "") ~?= Right
-            DATA.Func {
-              DATA.prepro = []
-            , DATA.return = ["void"]
-            , DATA.name   = "hoge_func__1"
-            , DATA.args   = [
-                DATA.Var {
-                  DATA.prepro = []
-                , DATA.typ = ["int"]
-                , DATA.name = "arg1"
-                , DATA.initVal = Nothing
+            D.Func {
+              D.prepro = []
+            , D.return = ["void"]
+            , D.name   = "hoge_func__1"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["int"]
+                , D.name = "arg1"
+                , D.initVal = Nothing
                 }
               ]
-            , DATA.procs = []
+            , D.procs = []
             }
 
   , "testDefFunction normal 3" ~:
@@ -184,25 +184,25 @@ static int * mul_ret_arg_f ( char hoge, int *p_fuga )
 {
 }
 |] `feed` "") ~?= Right
-            DATA.Func {
-              DATA.prepro = []
-            , DATA.return = ["static", "int", "*"]
-            , DATA.name   = "mul_ret_arg_f"
-            , DATA.args   = [
-                DATA.Var {
-                  DATA.prepro = []
-                , DATA.typ = ["char"]
-                , DATA.name = "hoge"
-                , DATA.initVal = Nothing
+            D.Func {
+              D.prepro = []
+            , D.return = ["static", "int", "*"]
+            , D.name   = "mul_ret_arg_f"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["char"]
+                , D.name = "hoge"
+                , D.initVal = Nothing
                 }
-              , DATA.Var {
-                  DATA.prepro = []
-                , DATA.typ = ["int", "*"]
-                , DATA.name = "p_fuga"
-                , DATA.initVal = Nothing
+              , D.Var {
+                  D.prepro = []
+                , D.typ = ["int", "*"]
+                , D.name = "p_fuga"
+                , D.initVal = Nothing
                 }
               ]
-            , DATA.procs = []
+            , D.procs = []
             }
 
   , "testDefFunction normal 4" ~:
@@ -214,27 +214,27 @@ int main( void )
     return (0);
 }
 |] `feed` "") ~?= Right
-            DATA.Func {
-              DATA.prepro = []
-            , DATA.return = ["int"]
-            , DATA.name   = "main"
-            , DATA.args   = [
-                DATA.Var {
-                  DATA.prepro = []
-                , DATA.typ = ["void"]
-                , DATA.name = ""
-                , DATA.initVal = Nothing
+            D.Func {
+              D.prepro = []
+            , D.return = ["int"]
+            , D.name   = "main"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
                 }
               ]
-            , DATA.procs = [
-                DATA.Call {
-                  DATA.prepro = []
-                , DATA.name = "printf"
-                , DATA.args = ["\"Hellow World\\n\""]
+            , D.procs = [
+                D.Call {
+                  D.prepro = []
+                , D.name = "printf"
+                , D.args = ["\"Hellow World\\n\""]
                 }
-              , DATA.Return {
-                  DATA.prepro = []
-                , DATA.value = "0"
+              , D.Return {
+                  D.prepro = []
+                , D.value = "0"
                 }
               ]
             }
@@ -245,26 +245,26 @@ void func( void )
     int local_var;
 }
 |] `feed` "") ~?= Right
-            DATA.Func {
-              DATA.prepro = []
-            , DATA.return = ["void"]
-            , DATA.name   = "func"
-            , DATA.args   = [
-                DATA.Var {
-                  DATA.prepro = []
-                , DATA.typ = ["void"]
-                , DATA.name = ""
-                , DATA.initVal = Nothing
+            D.Func {
+              D.prepro = []
+            , D.return = ["void"]
+            , D.name   = "func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
                 }
               ]
-            , DATA.procs = [
-                DATA.LVar {
-                  DATA.prepro = []
-                , DATA.var = DATA.Var {
-                    DATA.prepro = []
-                  , DATA.typ = ["int"]
-                  , DATA.name = "local_var"
-                  , DATA.initVal = Nothing
+            , D.procs = [
+                D.LVar {
+                  D.prepro = []
+                , D.var = D.Var {
+                    D.prepro = []
+                  , D.typ = ["int"]
+                  , D.name = "local_var"
+                  , D.initVal = Nothing
                   }
                 }
               ]
@@ -285,92 +285,92 @@ testDefVariable :: Test
 testDefVariable = TestList
   [ "testDefVariable normal 1" ~:
         (exRes $ stParse [] defVariable "int hoge;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["int"]
-            , DATA.name = "hoge"
-            , DATA.initVal = Nothing
+            D.Var {
+              D.prepro = []
+            , D.typ = ["int"]
+            , D.name = "hoge"
+            , D.initVal = Nothing
             }
   , "testDefVariable normal 2" ~:
         (exRes $ stParse [] defVariable "MyStruct st_var;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["MyStruct"]
-            , DATA.name = "st_var"
-            , DATA.initVal = Nothing
+            D.Var {
+              D.prepro = []
+            , D.typ = ["MyStruct"]
+            , D.name = "st_var"
+            , D.initVal = Nothing
             }
   , "testDefVariable normal 3" ~:
         (exRes $ stParse [] defVariable "unsigned int  uint_var;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["unsigned", "int"]
-            , DATA.name = "uint_var"
-            , DATA.initVal = Nothing
+            D.Var {
+              D.prepro = []
+            , D.typ = ["unsigned", "int"]
+            , D.name = "uint_var"
+            , D.initVal = Nothing
             }
 
   , "testDefVariable initial value 1" ~:
         (exRes $ stParse [] defVariable "Hoge yyy_abc = 100;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["Hoge"]
-            , DATA.name = "yyy_abc"
-            , DATA.initVal = Just "100"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["Hoge"]
+            , D.name = "yyy_abc"
+            , D.initVal = Just "100"
             }
   , "testDefVariable initial value 2" ~:
         (exRes $ stParse [] defVariable "Hoge     yyy_abc            =    100       ;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["Hoge"]
-            , DATA.name = "yyy_abc"
-            , DATA.initVal = Just "100"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["Hoge"]
+            , D.name = "yyy_abc"
+            , D.initVal = Just "100"
             }
   , "testDefVariable initial value 3" ~:
         (exRes $ stParse [] defVariable "char    foobar_xyz   =  VALUE;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["char"]
-            , DATA.name = "foobar_xyz"
-            , DATA.initVal = Just "VALUE"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["char"]
+            , D.name = "foobar_xyz"
+            , D.initVal = Just "VALUE"
             }
   , "testDefVariable initial value 4" ~:
         (exRes $ stParse [] defVariable "  static char    foobar_xyz   =  0xFFFF  ;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["static", "char"]
-            , DATA.name = "foobar_xyz"
-            , DATA.initVal = Just "0xFFFF"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["static", "char"]
+            , D.name = "foobar_xyz"
+            , D.initVal = Just "0xFFFF"
             }
 
   , "testDefVariable pointer 1" ~:
         (exRes $ stParse [] defVariable "  signed int    *p_val_axz   =  &hoge  ;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["signed", "int", "*"]
-            , DATA.name = "p_val_axz"
-            , DATA.initVal = Just "&hoge"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["signed", "int", "*"]
+            , D.name = "p_val_axz"
+            , D.initVal = Just "&hoge"
             }
   , "testDefVariable pointer 2" ~:
         (exRes $ stParse [] defVariable "  signed  * int    **p_val_00d4   =  &hoge  ;" `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = []
-            , DATA.typ = ["signed", "*", "int", "*", "*"]
-            , DATA.name = "p_val_00d4"
-            , DATA.initVal = Just "&hoge"
+            D.Var {
+              D.prepro = []
+            , D.typ = ["signed", "*", "int", "*", "*"]
+            , D.name = "p_val_00d4"
+            , D.initVal = Just "&hoge"
             }
   , "testDefVariable prepro 1" ~:
         (exRes $ stParse [] defVariable testDefVariable_in1 `feed` "") ~?= Right
-            DATA.Var {
-              DATA.prepro = [
-                DATA.Condition {
-                  DATA.command = "#if"
-                , DATA.left = "HOGE_SW"
-                , DATA.op = "=="
-                , DATA.right = "1"
+            D.Var {
+              D.prepro = [
+                D.Condition {
+                  D.command = "#if"
+                , D.left = "HOGE_SW"
+                , D.op = "=="
+                , D.right = "1"
                 }
             ]
-            , DATA.typ = ["char"]
-            , DATA.name = "condition_variable"
-            , DATA.initVal = Nothing
+            , D.typ = ["char"]
+            , D.name = "condition_variable"
+            , D.initVal = Nothing
             }
   ]
 
@@ -383,10 +383,10 @@ testDefVariable = TestList
 --  [ "testArguments normal 1" ~:
 --        (exRes $ parse arguments "  int arg " `feed` "") ~?= Right
 --            [
---              DATA.Var {
---                DATA.typ = ["int"]
---              , DATA.name = "arg"
---              , DATA.initVal = Nothing
+--              D.Var {
+--                D.typ = ["int"]
+--              , D.name = "arg"
+--              , D.initVal = Nothing
 --              }
 --            ]
 --  ]
@@ -418,71 +418,71 @@ testDefVariable = TestList
 --testJustPreIf = TestList
 --  [ "testJustPreIf normal 1" ~:
 --        (exRes $ parse preproIfStart "#if PRE_VARI == 1\nint hoge;\n#endif" `feed` "") ~?= Right
---            DATA.Csrc {
---              DATA.prepro = ["#if PRE_VARI == 1"]
---            , DATA.statements = DATA.Var {
---                DATA.typ = ["int"]
---              , DATA.name = "hoge"
---              , DATA.initVal = Nothing
+--            D.Csrc {
+--              D.prepro = ["#if PRE_VARI == 1"]
+--            , D.statements = D.Var {
+--                D.typ = ["int"]
+--              , D.name = "hoge"
+--              , D.initVal = Nothing
 --              }
---            , DATA.next = DATA.End
+--            , D.next = D.End
 --            }
 --  , "testJustPreIf normal 2" ~:
 --        (exRes $ parse preproIfStart s_preIf_1 `feed` "") ~?= Right
---            DATA.Csrc {
---              DATA.prepro = ["#if PRE_VARI == 1"]
---            , DATA.statements = DATA.Var {
---                DATA.typ = ["signed", "int"]
---              , DATA.name = "pre_var"
---              , DATA.initVal = Nothing
+--            D.Csrc {
+--              D.prepro = ["#if PRE_VARI == 1"]
+--            , D.statements = D.Var {
+--                D.typ = ["signed", "int"]
+--              , D.name = "pre_var"
+--              , D.initVal = Nothing
 --              }
---            , DATA.next = DATA.Csrc {
---                DATA.prepro = ["#if PRE_VARI == 1"]
---              , DATA.statements = DATA.Var {
---                  DATA.typ = ["unsigned", "char"]
---                , DATA.name = "pre_var2"
---                , DATA.initVal = Nothing
+--            , D.next = D.Csrc {
+--                D.prepro = ["#if PRE_VARI == 1"]
+--              , D.statements = D.Var {
+--                  D.typ = ["unsigned", "char"]
+--                , D.name = "pre_var2"
+--                , D.initVal = Nothing
 --                }
---              , DATA.next = DATA.End
+--              , D.next = D.End
 --              }
 --            }
 --  , "testJustPreIf normal 3" ~:
 --        (exRes $ parse preproIfStart s_preIf_2 `feed` "") ~?= Right
---            DATA.Csrc {
---              DATA.prepro = ["#if PRE_VARI == 1"]
---            , DATA.statements = DATA.Var {
---                DATA.typ = ["signed", "int"]
---              , DATA.name = "pre_var"
---              , DATA.initVal = Nothing
+--            D.Csrc {
+--              D.prepro = ["#if PRE_VARI == 1"]
+--            , D.statements = D.Var {
+--                D.typ = ["signed", "int"]
+--              , D.name = "pre_var"
+--              , D.initVal = Nothing
 --              }
---            , DATA.next = DATA.Csrc {
---                DATA.prepro = ["#if PRE_VARI == 1"]
---              , DATA.statements = DATA.Var {
---                  DATA.typ = ["unsigned", "char"]
---                , DATA.name = "pre_var2"
---                , DATA.initVal = Nothing
+--            , D.next = D.Csrc {
+--                D.prepro = ["#if PRE_VARI == 1"]
+--              , D.statements = D.Var {
+--                  D.typ = ["unsigned", "char"]
+--                , D.name = "pre_var2"
+--                , D.initVal = Nothing
 --                }
---              , DATA.next = DATA.Csrc {
---                  DATA.prepro = []
---                , DATA.statements = DATA.Var {
---                    DATA.typ = ["int"]
---                  , DATA.name = "normal_var"
---                  , DATA.initVal = Just "55"
+--              , D.next = D.Csrc {
+--                  D.prepro = []
+--                , D.statements = D.Var {
+--                    D.typ = ["int"]
+--                  , D.name = "normal_var"
+--                  , D.initVal = Just "55"
 --                  }
---                , DATA.next = DATA.End
+--                , D.next = D.End
 --                }
 --              }
 --            }
 --  , "testJustPreIf normal 4" ~:
 --        (exRes $ parse preproIfStart "\n#if HOGE_XXX == VARI1 \nint hoge;\n#endif    /* HOGE_XXX */\n" `feed` "") ~?= Right
---            DATA.Csrc {
---              DATA.prepro = ["#if HOGE_XXX == VARI1"]
---            , DATA.statements = DATA.Var {
---                DATA.typ = ["int"]
---              , DATA.name = "hoge"
---              , DATA.initVal = Nothing
+--            D.Csrc {
+--              D.prepro = ["#if HOGE_XXX == VARI1"]
+--            , D.statements = D.Var {
+--                D.typ = ["int"]
+--              , D.name = "hoge"
+--              , D.initVal = Nothing
 --              }
---            , DATA.next = DATA.End
+--            , D.next = D.End
 --            }
 --  ]
 --
@@ -499,11 +499,11 @@ testDefVariable = TestList
 --testPreprocess = TestList
 --  [ "testPreprocess include 1" ~:
 --        (exRes $ parse (preprocess []) "#include <stdio.h>\n" `feed` "") ~?= Right
---            DATA.Prepro {
---              DATA.prepro = []
---            , DATA.contents = DATA.Include {
---                DATA.file = "<stdio.h>"
+--            D.Prepro {
+--              D.prepro = []
+--            , D.contents = D.Include {
+--                D.file = "<stdio.h>"
 --              }
---            , DATA.next = DATA.End
+--            , D.next = D.End
 --            }
 --  ]

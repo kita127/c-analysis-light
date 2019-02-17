@@ -6,6 +6,8 @@ module Language.C.Analysis.Light.Data
 , Cstate(..)
 , Proc(..)
 , Condition(..)
+, Exp(..)
+, Operation(..)
 ) where
 
 import           Data.Aeson.TH
@@ -71,9 +73,25 @@ data Proc = Call
             }
           | Assigne
             { prepro :: [Condition]
-            , right  :: T.Text
             , left   :: T.Text
+            , right  :: Exp
             }
+          | Exprssions
+            { prepro   :: [Condition]
+            , contents :: Exp
+            }
+          deriving (Eq, Show)
+
+data Exp = Binary
+           { left  :: Exp
+           , op    :: Operation
+           , right :: Exp
+           }
+         | Literal
+           { value :: T.Text }
+          deriving (Eq, Show)
+
+data Operation = Add | Sub
           deriving (Eq, Show)
 
 -- TemplateHaskell
@@ -82,4 +100,6 @@ deriveJSON defaultOptions ''C
 deriveJSON defaultOptions ''PreState
 deriveJSON defaultOptions ''Cstate
 deriveJSON defaultOptions ''Proc
+deriveJSON defaultOptions ''Exp
+deriveJSON defaultOptions ''Operation
 

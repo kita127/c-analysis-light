@@ -295,8 +295,74 @@ void func( void )
             , D.procs = [
                 D.Assigne{
                   D.prepro = []
-                , D.right = "local_var"
-                , D.left = "2"
+                , D.left = "local_var"
+                , D.right = D.Literal {value = "2"}
+                }
+              ]
+            }
+  , "testDefFunction expression 1" ~:
+        (exRes $ stParse [] defFunction [r|
+void func( void )
+{
+    2 + 1;
+}
+|] `feed` "") ~?= Right
+            D.Func {
+              D.prepro = []
+            , D.return = ["void"]
+            , D.name   = "func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
+                }
+              ]
+            , D.procs = [
+                D.Exprssions{
+                  D.prepro = []
+                , D.contents =
+                    D.Binary {
+                      D.op = D.Add
+                    , D.left = D.Literal {
+                        D.value = "2"
+                      }
+                    , D.right = D.Literal {
+                        D.value = "1"
+                      }
+                    }
+                }
+              ]
+            }
+  , "testDefFunction expression 2" ~:
+        (exRes $ stParse [] defFunction [r|
+void func( void )
+{
+    local_val = 2 + 1;
+}
+|] `feed` "") ~?= Right
+            D.Func {
+              D.prepro = []
+            , D.return = ["void"]
+            , D.name   = "func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
+                }
+              ]
+            , D.procs = [
+                D.Assigne {
+                  D.prepro = []
+                , left = "local_val"
+                , right = D.Binary {
+                    D.left = D.Literal {value = "2"}
+                  , D.op   = D.Add
+                  , D.right = D.Literal {value = "1"}
+                  }
                 }
               ]
             }

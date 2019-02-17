@@ -272,7 +272,7 @@ block = do
 -- | process
 --
 process :: SParser D.Proc
-process = funcReturn <|> callFunc <|> localVariable <|> assigne
+process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> aloneExp
 
 
 -- | funcReturn
@@ -319,13 +319,47 @@ localVariable = update $ do
 --
 assigne :: SParser D.Proc
 assigne = update $ do
-    i <- token identifire
+    i <- identifire
     token $ lift $ char '='
-    v <- token value
+    v <- expression
     token $ lift $ char ';'
     s <- get
     return $ D.Assigne s i v
 
+-- | aloneExp
+--
+aloneExp :: SParser D.Proc
+aloneExp = update $ do
+    c <- expression
+    token $ lift $ char ';'
+    s <- get
+    return $ D.Exprssions s c
+
+-- | expression
+--
+expression :: SParser D.Exp
+expression = binary <|> literal
+
+-- | binary
+--
+binary :: SParser D.Exp
+binary = do
+    l  <- literal
+    op <- operation
+    r  <- literal
+    return $ D.Binary l op r
+
+
+-- | literal
+--
+literal :: SParser D.Exp
+literal = D.Literal <$> value
+
+
+-- | operation
+--
+operation :: SParser D.Operation
+operation = (token $ lift $ char '+') $> D.Add
 
 
 -- | liftAp

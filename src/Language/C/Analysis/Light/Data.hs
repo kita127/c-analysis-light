@@ -61,7 +61,7 @@ data Cstate = Var
 data Proc = Call
             { prepro :: [Condition]
             , name   :: T.Text
-            , args   :: [T.Text]
+            , args   :: [Exp]
             }
           | Return
             { prepro :: [Condition]
@@ -87,8 +87,12 @@ data Exp = Binary
            , op    :: Operation
            , right :: Exp
            }
+         | Identifire
+           { id :: T.Text }
          | Literal
            { value :: T.Text }
+         | StrLiteral
+           { str :: T.Text }
           deriving (Eq, Show)
 
 data Operation = Add | Sub

@@ -3,7 +3,11 @@
 
 int main( void )
 {
-    printf("Hello World\n");
+    int local_var;
+
+    local_var = 1 + 2;
+
+    printf("local_var ...%d\n", local_var);
 
     return (0);
 }

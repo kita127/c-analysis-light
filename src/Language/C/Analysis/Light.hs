@@ -252,7 +252,6 @@ justArgs = (`sepBy1` comma) $ do
     s <- get
     return $ D.Var s types name Nothing
     where
-        comma = lift $ char ','
 
 
 -- | block
@@ -282,17 +281,20 @@ callFunc :: SParser D.Proc
 callFunc = update $ do
     f <- identifire
     sParen
-    a <- strLiteral
+    a <- expression `sepBy` comma
     eParen
     semicolon
     s <- get
-    return $ D.Call s f [a]
+    return $ D.Call s f a
 
 -- | strLiteral
 --
-strLiteral :: SParser T.Text
+strLiteral :: SParser D.Exp
 strLiteral = token $ lift $ do
-    string "\"" `liftAp` takeTill (== '"') `liftAp` "\""
+    char '"'
+    s <- takeTill (== '"')
+    char '"'
+    return $ D.StrLiteral s
 
 -- | localVariable
 --
@@ -312,12 +314,17 @@ aloneExp = update $ D.Exprssions <$> get <*> expression <* semicolon
 -- | expression
 --
 expression :: SParser D.Exp
-expression = binary <|> literal
+expression = binary <|> expressionId <|> strLiteral <|> literal
 
 -- | binary
 --
 binary :: SParser D.Exp
 binary = D.Binary <$> literal <*> operation <*> literal
+
+-- | expressionId
+--
+expressionId :: SParser D.Exp
+expressionId = D.Identifire <$> identifire
 
 
 -- | literal
@@ -366,6 +373,12 @@ equal = token $ lift $ char '=' $> ()
 --
 semicolon :: SParser ()
 semicolon = token $ lift $ char ';' $> ()
+
+
+-- | comma
+--
+comma :: SParser Char
+comma = lift $ char ','
 
 
 -- | liftAp

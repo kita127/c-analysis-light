@@ -205,10 +205,7 @@ static int * mul_ret_arg_f ( char hoge, int *p_fuga )
             , D.procs = []
             }
 
--- TODO:
--- 文字列はそれ専用のデータ型(StrLitteral)みたいなものをつくりたい
---
-  , "testDefFunction normal 4" ~:
+  , "testDefFunction call 1" ~:
         (exRes $ stParse [] defFunction [r|
 int main( void )
 {
@@ -233,7 +230,9 @@ int main( void )
                 D.Call {
                   D.prepro = []
                 , D.name = "printf"
-                , D.args = ["\"Hellow World\\n\""]
+                , D.args = [
+                    D.StrLiteral {D.str = "Hellow World\\n"}
+                  ]
                 }
               , D.Return {
                   D.prepro = []
@@ -241,6 +240,44 @@ int main( void )
                 }
               ]
             }
+
+  , "testDefFunction call 2" ~:
+        (exRes $ stParse [] defFunction [r|
+int main( void )
+{
+    printf("local_var ...%d\n", local_var);
+
+    return (0);
+}
+|] `feed` "") ~?= Right
+            D.Func {
+              D.prepro = []
+            , D.return = ["int"]
+            , D.name   = "main"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
+                }
+              ]
+            , D.procs = [
+                D.Call {
+                  D.prepro = []
+                , D.name = "printf"
+                , D.args = [
+                    D.StrLiteral {D.str = "local_var ...%d\\n"}
+                  , D.Identifire {D.id = "local_var"}
+                  ]
+                }
+              , D.Return {
+                  D.prepro = []
+                , D.value = "0"
+                }
+              ]
+            }
+
   , "testDefFunction local var 1" ~:
         (exRes $ stParse [] defFunction [r|
 void func( void )

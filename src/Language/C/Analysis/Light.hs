@@ -1,10 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
-
--- TODO:
--- char ';' char '=' など関数にする
-
 module Language.C.Analysis.Light
 ( analyze
 , token
@@ -155,7 +151,7 @@ defVariable :: SParser D.Cstate
 defVariable = update $ do
     (name, types) <- typeAndID
     v <- initValue
-    token $ lift $ char ';'
+    semicolon
     s <- get
     return $ D.Var s types name v
 
@@ -199,7 +195,7 @@ initValue :: SParser (Maybe T.Text)
 initValue = Just <$> p <|> pure Nothing
     where
         p :: SParser T.Text
-        p = token (lift $ char '=') *> value
+        p = equal *> value
 
 
 -- | value
@@ -229,9 +225,9 @@ hex = do
 defFunction :: SParser D.Cstate
 defFunction = do
     (name, ret) <- typeAndID
-    token $ lift $ char '('
+    sParen
     args <- arguments
-    token $ lift $ char ')'
+    eParen
     p <- block
     s <- get
     return $ D.Func s ret name args p
@@ -263,9 +259,9 @@ justArgs = (`sepBy1` comma) $ do
 --
 block :: SParser [D.Proc]
 block = do
-    token $ lift $ char '{'
+    sBracket
     ps <- many' $ process
-    token $ lift $ char '}'
+    eBracket
     return ps
 
 
@@ -280,10 +276,10 @@ process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> aloneExp
 funcReturn :: SParser D.Proc
 funcReturn = update $ do
     token $ lift $ string "return"
-    token $ lift $ char '('
+    sParen
     v <- token $ value
-    token $ lift $ char ')'
-    token $ lift $ char ';'
+    eParen
+    semicolon
     s <- get
     return $ D.Return s v
 
@@ -293,10 +289,10 @@ funcReturn = update $ do
 callFunc :: SParser D.Proc
 callFunc = update $ do
     f <- identifire
-    token $ lift $ char '('
+    sParen
     a <- strLiteral
-    token $ lift $ char ')'
-    token $ lift $ char ';'
+    eParen
+    semicolon
     s <- get
     return $ D.Call s f [a]
 
@@ -320,9 +316,9 @@ localVariable = update $ do
 assigne :: SParser D.Proc
 assigne = update $ do
     i <- identifire
-    token $ lift $ char '='
+    equal
     v <- expression
-    token $ lift $ char ';'
+    semicolon
     s <- get
     return $ D.Assigne s i v
 
@@ -331,7 +327,7 @@ assigne = update $ do
 aloneExp :: SParser D.Proc
 aloneExp = update $ do
     c <- expression
-    token $ lift $ char ';'
+    semicolon
     s <- get
     return $ D.Exprssions s c
 
@@ -360,6 +356,37 @@ literal = D.Literal <$> value
 --
 operation :: SParser D.Operation
 operation = (token $ lift $ char '+') $> D.Add
+
+
+-- | sParen
+--
+sParen :: SParser ()
+sParen = token $ lift $ char '(' $> ()
+
+-- | eParen
+--
+eParen :: SParser ()
+eParen = token $ lift $ char ')' $> ()
+
+-- | sBracket
+--
+sBracket :: SParser ()
+sBracket = token $ lift $ char '{' $> ()
+
+-- | eBracket
+--
+eBracket :: SParser ()
+eBracket = token $ lift $ char '}' $> ()
+
+-- | equal
+--
+equal :: SParser ()
+equal = token $ lift $ char '=' $> ()
+
+-- | semicolon
+--
+semicolon :: SParser ()
+semicolon = token $ lift $ char ';' $> ()
 
 
 -- | liftAp

@@ -1,6 +1,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
+
+-- TODO:
+-- char ';' char '=' など関数にする
+
 module Language.C.Analysis.Light
 ( analyze
 , token
@@ -160,7 +164,9 @@ defVariable = update $ do
 --
 typeAndID :: SParser (IDStr, [TypeStr])
 typeAndID = do
-    ids <- many1 $ identifire <|> pointer
+    t <- identifire <|> pointer
+    ts <- many1 $ identifire <|> pointer
+    let ids = t:ts
     return (last ids, init ids)
 
 
@@ -266,7 +272,7 @@ block = do
 -- | process
 --
 process :: SParser D.Proc
-process = funcReturn <|> callFunc <|> localVariable
+process = funcReturn <|> callFunc <|> localVariable <|> assigne
 
 
 -- | funcReturn
@@ -308,6 +314,17 @@ localVariable = update $ do
     s <- get
     return $ D.LVar s v
 
+
+-- | assigne
+--
+assigne :: SParser D.Proc
+assigne = update $ do
+    i <- token identifire
+    token $ lift $ char '='
+    v <- token value
+    token $ lift $ char ';'
+    s <- get
+    return $ D.Assigne s i v
 
 
 

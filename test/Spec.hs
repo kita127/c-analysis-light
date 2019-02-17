@@ -205,6 +205,9 @@ static int * mul_ret_arg_f ( char hoge, int *p_fuga )
             , D.procs = []
             }
 
+-- TODO:
+-- 文字列はそれ専用のデータ型(StrLitteral)みたいなものをつくりたい
+--
   , "testDefFunction normal 4" ~:
         (exRes $ stParse [] defFunction [r|
 int main( void )
@@ -238,7 +241,7 @@ int main( void )
                 }
               ]
             }
-  , "testDefFunction normal 5" ~:
+  , "testDefFunction local var 1" ~:
         (exRes $ stParse [] defFunction [r|
 void func( void )
 {
@@ -266,6 +269,34 @@ void func( void )
                   , D.name = "local_var"
                   , D.initVal = Nothing
                   }
+                }
+              ]
+            }
+
+  , "testDefFunction assigne 1" ~:
+        (exRes $ stParse [] defFunction [r|
+void func( void )
+{
+    local_var = 2;
+}
+|] `feed` "") ~?= Right
+            D.Func {
+              D.prepro = []
+            , D.return = ["void"]
+            , D.name   = "func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
+                }
+              ]
+            , D.procs = [
+                D.Assigne{
+                  D.prepro = []
+                , D.right = "local_var"
+                , D.left = "2"
                 }
               ]
             }

@@ -66,8 +66,13 @@ data Proc = Call
             , value  :: T.Text
             }
           | LVar
-            { prepro  :: [Condition]
-            , var     :: Cstate
+            { prepro :: [Condition]
+            , var    :: Cstate
+            }
+          | Assigne
+            { prepro :: [Condition]
+            , right  :: T.Text
+            , left   :: T.Text
             }
           deriving (Eq, Show)
 

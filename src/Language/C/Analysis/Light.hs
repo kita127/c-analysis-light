@@ -274,15 +274,7 @@ process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> aloneExp
 -- | funcReturn
 --
 funcReturn :: SParser D.Proc
-funcReturn = update $ do
-    token $ lift $ string "return"
-    sParen
-    v <- value
-    eParen
-    semicolon
-    s <- get
-    return $ D.Return s v
-
+funcReturn = update $ D.Return <$> get <* returnKey <* sParen <*> value <* eParen <* semicolon
 
 -- | callFunc
 --
@@ -305,31 +297,17 @@ strLiteral = token $ lift $ do
 -- | localVariable
 --
 localVariable :: SParser D.Proc
-localVariable = update $ do
-    v <- defVariable
-    s <- get
-    return $ D.LVar s v
-
+localVariable = update $ D.LVar <$> get <*> defVariable
 
 -- | assigne
 --
 assigne :: SParser D.Proc
-assigne = update $ do
-    i <- identifire
-    equal
-    v <- expression
-    semicolon
-    s <- get
-    return $ D.Assigne s i v
+assigne = update $ D.Assigne <$> get <*> identifire <* equal <*> expression <* semicolon
 
 -- | aloneExp
 --
 aloneExp :: SParser D.Proc
-aloneExp = update $ do
-    c <- expression
-    semicolon
-    s <- get
-    return $ D.Exprssions s c
+aloneExp = update $ D.Exprssions <$> get <*> expression <* semicolon
 
 -- | expression
 --
@@ -339,11 +317,7 @@ expression = binary <|> literal
 -- | binary
 --
 binary :: SParser D.Exp
-binary = do
-    l  <- literal
-    op <- operation
-    r  <- literal
-    return $ D.Binary l op r
+binary = D.Binary <$> literal <*> operation <*> literal
 
 
 -- | literal
@@ -357,6 +331,11 @@ literal = D.Literal <$> value
 operation :: SParser D.Operation
 operation = (token $ lift $ char '+') $> D.Add
 
+
+-- | returnKey
+--
+returnKey :: SParser ()
+returnKey = token $ lift $ string "return" $> ()
 
 -- | sParen
 --

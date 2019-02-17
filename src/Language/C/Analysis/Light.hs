@@ -277,7 +277,7 @@ funcReturn :: SParser D.Proc
 funcReturn = update $ do
     token $ lift $ string "return"
     sParen
-    v <- token $ value
+    v <- value
     eParen
     semicolon
     s <- get

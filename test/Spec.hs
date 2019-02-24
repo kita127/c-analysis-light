@@ -269,7 +269,7 @@ int main( void )
                 , D.name = "printf"
                 , D.args = [
                     D.StrLiteral {D.value = "local_var ...%d\\n"}
-                  , D.Identifire {D.id = "local_var"}
+                  , D.Identifire {D.name = "local_var"}
                   ]
                 }
               , D.Return {
@@ -537,6 +537,11 @@ testExpr = TestList
               }
             }
 
+  , "testExpr  identifire 1" ~:
+        (exRes $ stParse [] expr "hoge_var" `feed` "") ~?= Right
+            D.Identifire {
+              D.name = "hoge_var"
+            }
 
   ]
 

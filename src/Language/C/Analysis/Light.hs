@@ -297,7 +297,7 @@ expr' :: Parser D.Exp
 expr' = buildExpressionParser table term <?> "expression"
 
 term :: Parser D.Exp
-term =  parens' expr' <|> literal' <?> "simple expression"
+term =  parens' expr' <|> exprId' <|> literal' <?> "simple expression"
 
 table :: [[Operator T.Text D.Exp]]
 table = [ [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]
@@ -317,6 +317,24 @@ binary' name fun assoc = Infix (do{ string name; return fun }) assoc
 
 
 
+-- | literal
+--
+-- TODO:
+-- literal からは identifire は除く
+--
+literal :: SParser D.Exp
+literal = lift literal'
+
+literal' :: Parser D.Exp
+literal' = D.Literal <$> value'
+
+-- | exprId
+--
+exprId' :: Parser D.Exp
+exprId' = D.Identifire <$> identifire'
+
+
+
 -- | identifire
 --
 identifire :: SParser T.Text
@@ -328,13 +346,6 @@ identifire' = token' $ do
     tail' <- many1 idLetter
     return $ T.pack $ head' : tail'
 
--- | literal
---
-literal :: SParser D.Exp
-literal = lift literal'
-
-literal' :: Parser D.Exp
-literal' = D.Literal <$> value'
 
 
 -- | value

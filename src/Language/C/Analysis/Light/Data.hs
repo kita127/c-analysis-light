@@ -57,6 +57,9 @@ data Cstate = Var
               }
             deriving (Eq, Show)
 
+-- TODO:
+-- Exprssions を式文とかにしたい
+--
 data Proc = Call
             { prepro :: [Condition]
             , name   :: T.Text
@@ -81,16 +84,13 @@ data Proc = Call
             }
           deriving (Eq, Show)
 
--- TODO:
--- Add とか Sub とかわかりづらいのでやめるかも
---
 data Exp = Binary
            { op    :: T.Text
            , left  :: Exp
            , right :: Exp
            }
          | Identifire
-           { id :: T.Text }
+           { name :: T.Text }
          | Literal
            { value :: T.Text }
          | StrLiteral

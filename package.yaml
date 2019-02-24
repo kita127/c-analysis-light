@@ -27,6 +27,7 @@ library:
   dependencies:
   - text
   - attoparsec
+  - attoparsec-expr
   - aeson
   - aeson-pretty
   - bytestring

@@ -18,6 +18,7 @@ import           Control.Applicative
 import           Control.Monad.Trans.Class      (lift)
 import           Control.Monad.Trans.State      (StateT, evalStateT, get,
                                                  modify)
+import           Data.Attoparsec.Expr
 import           Data.Attoparsec.Text           hiding (take)
 import           Data.Functor                   (($>))
 import           Data.List                      (intercalate)
@@ -387,6 +388,48 @@ comma = lift $ char ','
 --
 liftAp :: Applicative f => f T.Text -> f T.Text -> f T.Text
 liftAp = liftA2 T.append
+
+-- sample ---------------------------------------------------------------------------
+
+expr :: Parser D.Exp
+expr = buildExpressionParser table term <?> "expression"
+
+term :: Parser D.Exp
+term =  parens expr <|> natural <?> "simple expression"
+
+table :: [[Operator T.Text D.Exp]]
+table = [ [binary' "*" (`D.Binary` D.Mul) AssocLeft, binary' "/" (`D.Binary` D.Div) AssocLeft]
+        , [binary' "+" (`D.Binary` D.Add) AssocLeft, binary' "-" (`D.Binary`D.Sub) AssocLeft]
+        ]
+--table = [ [prefix "-" negate, prefix "+" id ]
+--        , [postfix "++" (+1)]
+--        , [binary' "*" (*) AssocLeft, binary' "/" (div) AssocLeft ]
+--        , [binary' "+" (+) AssocLeft, binary' "-" (-)   AssocLeft ]
+--        ]
+
+binary' :: T.Text -> (D.Exp -> D.Exp -> D.Exp) -> Assoc -> Operator T.Text D.Exp
+binary' name fun assoc = Infix (do{ string name; return fun }) assoc
+--prefix  name fun       = Prefix (do{ string name; return fun })
+--postfix name fun       = Postfix (do{ string name; return fun })
+
+
+
+parens :: Parser a -> Parser a
+parens p = string "(" *> p <* string ")"
+
+natural :: Parser D.Exp
+natural = do
+    s <- decimal
+    let s' = show s
+    return $ D.Literal $ T.pack s'
+
+
+testExpr :: T.Text -> Result D.Exp
+testExpr s = parse expr s `feed` ""
+
+
+
+-- sample ---------------------------------------------------------------------------
 
 
 

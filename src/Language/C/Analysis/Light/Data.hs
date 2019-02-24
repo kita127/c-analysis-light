@@ -95,7 +95,7 @@ data Exp = Binary
            { str :: T.Text }
           deriving (Eq, Show)
 
-data Operation = Add | Sub
+data Operation = Add | Sub | Mul | Div
           deriving (Eq, Show)
 
 -- TemplateHaskell

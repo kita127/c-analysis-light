@@ -468,6 +468,23 @@ testExpr = TestList
                 D.value = "2"
               }
             }
+  , "testExpr addition 2" ~:
+        (exRes $ stParse [] expr "1 + 2 + 3" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Binary {
+                D.op = "+"
+              , D.left = D.Literal {
+                  D.value = "1"
+                }
+              , D.right = D.Literal {
+                  D.value = "2"
+                }
+              }
+            , D.right = D.Literal {
+                D.value = "3"
+              }
+            }
 
 
 

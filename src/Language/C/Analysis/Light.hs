@@ -283,54 +283,6 @@ operation :: SParser T.Text
 operation = token $ lift $ string "+"
 
 
--- | returnKey
---
-returnKey :: SParser ()
-returnKey = token $ lift $ string "return" $> ()
-
--- | sParen
---
-sParen :: SParser ()
-sParen = token $ lift $ char '(' $> ()
-
--- | eParen
---
-eParen :: SParser ()
-eParen = token $ lift $ char ')' $> ()
-
--- | sBracket
---
-sBracket :: SParser ()
-sBracket = token $ lift $ char '{' $> ()
-
--- | eBracket
---
-eBracket :: SParser ()
-eBracket = token $ lift $ char '}' $> ()
-
--- | equal
---
-equal :: SParser ()
-equal = token $ lift $ char '=' $> ()
-
--- | semicolon
---
-semicolon :: SParser ()
-semicolon = token $ lift $ char ';' $> ()
-
-
--- | comma
---
-comma :: SParser Char
-comma = lift $ char ','
-
-
--- | liftAp
---
--- T.append の リフト関数
---
-liftAp :: Applicative f => f T.Text -> f T.Text -> f T.Text
-liftAp = liftA2 T.append
 
 
 
@@ -345,7 +297,7 @@ expr' :: Parser D.Exp
 expr' = buildExpressionParser table term <?> "expression"
 
 term :: Parser D.Exp
-term =  parens expr' <|> literal' <?> "simple expression"
+term =  parens' expr' <|> literal' <?> "simple expression"
 
 table :: [[Operator T.Text D.Exp]]
 table = [ [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]
@@ -363,9 +315,6 @@ binary' name fun assoc = Infix (do{ string name; return fun }) assoc
 --postfix name fun       = Postfix (do{ string name; return fun })
 
 
-
-parens :: Parser a -> Parser a
-parens p = string "(" *> p <* string ")"
 
 
 -- | identifire
@@ -414,6 +363,73 @@ hex' = do
     where
         p :: Parser String
         p = many1 $ satisfy $ inClass "a-fA-F0-9"
+
+-- ----------------------------------------------------------------------------------
+-- | keywords
+-- ----------------------------------------------------------------------------------
+-- | parens
+--
+parens :: SParser a -> SParser a
+parens p = sParen *> p <* eParen
+
+parens' :: Parser a -> Parser a
+parens' p = sParen' *> p <* eParen'
+
+-- | returnKey
+--
+returnKey :: SParser ()
+returnKey = token $ lift $ string "return" $> ()
+
+-- | sParen
+--
+sParen :: SParser ()
+sParen = token $ lift $ char '(' $> ()
+
+sParen' :: Parser ()
+sParen' = token' $ char '(' $> ()
+
+
+-- | eParen
+--
+eParen :: SParser ()
+eParen = token $ lift $ char ')' $> ()
+
+eParen' :: Parser ()
+eParen' = token' $ char ')' $> ()
+
+-- | sBracket
+--
+sBracket :: SParser ()
+sBracket = token $ lift $ char '{' $> ()
+
+-- | eBracket
+--
+eBracket :: SParser ()
+eBracket = token $ lift $ char '}' $> ()
+
+-- | equal
+--
+equal :: SParser ()
+equal = token $ lift $ char '=' $> ()
+
+-- | semicolon
+--
+semicolon :: SParser ()
+semicolon = token $ lift $ char ';' $> ()
+
+
+-- | comma
+--
+comma :: SParser Char
+comma = lift $ char ','
+
+
+-- | liftAp
+--
+-- T.append の リフト関数
+--
+liftAp :: Applicative f => f T.Text -> f T.Text -> f T.Text
+liftAp = liftA2 T.append
 
 
 

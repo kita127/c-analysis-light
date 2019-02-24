@@ -452,11 +452,13 @@ testExpr = TestList
             D.Literal {
               D.value = "123"
             }
-  , "testExpr literal space 1" ~:
+
+  , "testExpr literal + space 1" ~:
         (exRes $ stParse [] expr "   123    " `feed` "") ~?= Right
             D.Literal {
               D.value = "123"
             }
+
   , "testExpr addition 1" ~:
         (exRes $ stParse [] expr "1 + 2" `feed` "") ~?= Right
             D.Binary {
@@ -468,7 +470,8 @@ testExpr = TestList
                 D.value = "2"
               }
             }
-  , "testExpr addition 2" ~:
+
+  , "testExpr addition 1" ~:
         (exRes $ stParse [] expr "1 + 2 + 3" `feed` "") ~?= Right
             D.Binary {
               D.op = "+"
@@ -486,6 +489,53 @@ testExpr = TestList
               }
             }
 
+  , "testExpr addition + parens 1" ~:
+        (exRes $ stParse [] expr "1 + (2 + 3)" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Literal {
+                D.value = "1"
+              }
+            , D.right = D.Binary {
+                D.op = "+"
+              , D.left = D.Literal {
+                  D.value = "2"
+                }
+              , D.right = D.Literal {
+                  D.value = "3"
+                }
+              }
+            }
+
+  , "testExpr  multicalc 1" ~:
+        (exRes $ stParse [] expr "1 * 2 + 3 / (4 - 5)" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Binary {
+                D.op = "*"
+              , D.left = D.Literal {
+                  D.value = "1"
+                }
+              , D.right = D.Literal {
+                  D.value = "2"
+                }
+              }
+            , D.right = D.Binary {
+                D.op = "/"
+              , D.left = D.Literal {
+                  D.value = "3"
+                }
+              , D.right = D.Binary {
+                  D.op = "-"
+                , D.left = D.Literal {
+                    D.value = "4"
+                  }
+                , D.right = D.Literal {
+                    D.value = "5"
+                  }
+                }
+              }
+            }
 
 
   ]

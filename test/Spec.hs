@@ -460,7 +460,7 @@ testExpr = TestList
   , "testExpr addition 1" ~:
         (exRes $ stParse [] expr "1 + 2" `feed` "") ~?= Right
             D.Binary {
-              D.op = D.Add
+              D.op = "+"
             , D.left = D.Literal {
                 D.value = "1"
               }

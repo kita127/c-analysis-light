@@ -279,8 +279,8 @@ expressionId = D.Identifire <$> identifire
 
 -- | operation
 --
-operation :: SParser D.Operation
-operation = (token $ lift $ char '+') $> D.Add
+operation :: SParser T.Text
+operation = token $ lift $ string "+"
 
 
 -- | returnKey
@@ -348,8 +348,8 @@ term :: Parser D.Exp
 term =  parens expr' <|> literal' <?> "simple expression"
 
 table :: [[Operator T.Text D.Exp]]
-table = [ [binary' "*" (D.Binary D.Mul) AssocLeft, binary' "/" (D.Binary D.Div) AssocLeft]
-        , [binary' "+" (D.Binary D.Add) AssocLeft, binary' "-" (D.Binary D.Sub) AssocLeft]
+table = [ [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]
+        , [binary' "+" (D.Binary "+") AssocLeft, binary' "-" (D.Binary "-") AssocLeft]
         ]
 --table = [ [prefix "-" negate, prefix "+" id ]
 --        , [postfix "++" (+1)]

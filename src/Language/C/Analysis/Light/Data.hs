@@ -7,7 +7,6 @@ module Language.C.Analysis.Light.Data
 , Proc(..)
 , Condition(..)
 , Exp(..)
-, Operation(..)
 ) where
 
 import           Data.Aeson.TH
@@ -86,7 +85,7 @@ data Proc = Call
 -- Add とか Sub とかわかりづらいのでやめるかも
 --
 data Exp = Binary
-           { op    :: Operation
+           { op    :: T.Text
            , left  :: Exp
            , right :: Exp
            }
@@ -98,8 +97,6 @@ data Exp = Binary
            { str :: T.Text }
           deriving (Eq, Show)
 
-data Operation = Add | Sub | Mul | Div
-          deriving (Eq, Show)
 
 -- TemplateHaskell
 deriveJSON defaultOptions ''Condition
@@ -108,5 +105,4 @@ deriveJSON defaultOptions ''PreState
 deriveJSON defaultOptions ''Cstate
 deriveJSON defaultOptions ''Proc
 deriveJSON defaultOptions ''Exp
-deriveJSON defaultOptions ''Operation
 

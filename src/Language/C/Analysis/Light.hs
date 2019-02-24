@@ -345,6 +345,9 @@ identifire' = token' $ do
 
 -- | value
 --
+-- TODO:
+-- value は expression に置き換えるので削除予定
+--
 value :: SParser T.Text
 value = lift value'
 

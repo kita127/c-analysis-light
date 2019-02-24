@@ -297,7 +297,9 @@ expr' :: Parser D.Exp
 expr' = buildExpressionParser table term <?> "expression"
 
 term :: Parser D.Exp
-term =  parens' expr' <|> exprId' <|> literal' <?> "simple expression"
+term =  parens' expr' <|> id' <|> literal' <?> "simple expression"
+    where
+        id' = D.Identifire <$> identifire'
 
 table :: [[Operator T.Text D.Exp]]
 table = [ [prefix  "&" (D.PreUnary "&")]
@@ -320,19 +322,11 @@ prefix  name fun       = Prefix (do{ string name; return fun })
 
 -- | literal
 --
--- TODO:
--- literal からは identifire は除く
---
 literal :: SParser D.Exp
 literal = lift literal'
 
 literal' :: Parser D.Exp
 literal' = D.Literal <$> (hex' <|> integer')
-
--- | exprId
---
-exprId' :: Parser D.Exp
-exprId' = D.Identifire <$> identifire'
 
 
 

@@ -22,7 +22,7 @@ main = do
     runTestTT $ TestList
       [ testSample
       , testToken
---      , testComment
+      , testComment
       , testValue
       , testIdentifire
       , testDefVariable

@@ -327,7 +327,7 @@ literal :: SParser D.Exp
 literal = lift literal'
 
 literal' :: Parser D.Exp
-literal' = D.Literal <$> value'
+literal' = D.Literal <$> (hex' <|> integer')
 
 -- | exprId
 --
@@ -361,6 +361,11 @@ value' = token' $ hex' <|> (T.pack <$> many1 digit) <|> addressVal <|> identifir
             char '&'
             n <- identifire'
             return $ '&' `T.cons` n
+
+-- | integer
+--
+integer' :: Parser T.Text
+integer' = token' $ T.pack <$> many1 digit
 
 -- | hex
 --

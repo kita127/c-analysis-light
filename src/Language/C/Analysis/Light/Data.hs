@@ -94,7 +94,7 @@ data Exp = Binary
          | Literal
            { value :: T.Text }
          | StrLiteral
-           { str :: T.Text }
+           { value :: T.Text }
           deriving (Eq, Show)
 
 

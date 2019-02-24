@@ -232,7 +232,7 @@ int main( void )
                   D.prepro = []
                 , D.name = "printf"
                 , D.args = [
-                    D.StrLiteral {D.str = "Hellow World\\n"}
+                    D.StrLiteral {D.value = "Hellow World\\n"}
                   ]
                 }
               , D.Return {
@@ -268,7 +268,7 @@ int main( void )
                   D.prepro = []
                 , D.name = "printf"
                 , D.args = [
-                    D.StrLiteral {D.str = "local_var ...%d\\n"}
+                    D.StrLiteral {D.value = "local_var ...%d\\n"}
                   , D.Identifire {D.id = "local_var"}
                   ]
                 }

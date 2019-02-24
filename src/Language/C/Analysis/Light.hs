@@ -267,7 +267,7 @@ expression = binary <|> expressionId <|> strLiteral <|> literal
 -- | binary
 --
 binary :: SParser D.Exp
-binary = D.Binary <$> literal <*> operation <*> literal
+binary = D.Binary <$> operation <*> literal <*> literal
 
 -- | expressionId
 --
@@ -332,7 +332,9 @@ comma = lift $ char ','
 liftAp :: Applicative f => f T.Text -> f T.Text -> f T.Text
 liftAp = liftA2 T.append
 
--- sample ---------------------------------------------------------------------------
+
+
+
 
 -- | expr
 --
@@ -346,8 +348,8 @@ term :: Parser D.Exp
 term =  parens expr' <|> literal' <?> "simple expression"
 
 table :: [[Operator T.Text D.Exp]]
-table = [ [binary' "*" (`D.Binary` D.Mul) AssocLeft, binary' "/" (`D.Binary` D.Div) AssocLeft]
-        , [binary' "+" (`D.Binary` D.Add) AssocLeft, binary' "-" (`D.Binary`D.Sub) AssocLeft]
+table = [ [binary' "*" (D.Binary D.Mul) AssocLeft, binary' "/" (D.Binary D.Div) AssocLeft]
+        , [binary' "+" (D.Binary D.Add) AssocLeft, binary' "-" (D.Binary D.Sub) AssocLeft]
         ]
 --table = [ [prefix "-" negate, prefix "+" id ]
 --        , [postfix "++" (+1)]
@@ -416,8 +418,6 @@ hex' = do
 
 
 
-
--- sample ---------------------------------------------------------------------------
 
 
 -- ----------------------------------------------------------------------------------

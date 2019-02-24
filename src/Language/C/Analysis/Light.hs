@@ -158,11 +158,11 @@ pointer = token $ lift $ string "*"
 
 -- | initValue
 --
-initValue :: SParser (Maybe T.Text)
+initValue :: SParser (Maybe D.Exp)
 initValue = Just <$> p <|> pure Nothing
     where
-        p :: SParser T.Text
-        p = equal *> value
+        p :: SParser D.Exp
+        p = equal *> expr
 
 
 
@@ -300,7 +300,8 @@ term :: Parser D.Exp
 term =  parens' expr' <|> exprId' <|> literal' <?> "simple expression"
 
 table :: [[Operator T.Text D.Exp]]
-table = [ [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]
+table = [ [prefix  "&" (D.PreUnary "&")]
+        , [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]
         , [binary' "+" (D.Binary "+") AssocLeft, binary' "-" (D.Binary "-") AssocLeft]
         ]
 --table = [ [prefix "-" negate, prefix "+" id ]
@@ -311,7 +312,7 @@ table = [ [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") Asso
 
 binary' :: T.Text -> (D.Exp -> D.Exp -> D.Exp) -> Assoc -> Operator T.Text D.Exp
 binary' name fun assoc = Infix (do{ string name; return fun }) assoc
---prefix  name fun       = Prefix (do{ string name; return fun })
+prefix  name fun       = Prefix (do{ string name; return fun })
 --postfix name fun       = Postfix (do{ string name; return fun })
 
 

@@ -46,7 +46,7 @@ data Cstate = Var
               { prepro  :: [Condition]
               , typ     :: [T.Text]
               , name    :: T.Text
-              , initVal :: Maybe T.Text
+              , initVal :: Maybe Exp
               }
             | Func
               { prepro :: [Condition]
@@ -84,7 +84,11 @@ data Proc = Call
             }
           deriving (Eq, Show)
 
-data Exp = Binary
+data Exp = PreUnary
+           { op      :: T.Text
+           , operand :: Exp
+           }
+         | Binary
            { op    :: T.Text
            , left  :: Exp
            , right :: Exp

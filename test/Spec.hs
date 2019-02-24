@@ -55,25 +55,33 @@ testToken = TestList
 
 -- | testComment
 --
---testComment :: Test
---testComment = TestList
---  [ "testComment normal 1" ~:
---        (exRes $ stParse [] defVariable "/* comment */    MyType my_var = tmp_v;" `feed` "") ~?= Right
---            D.Var {
---              D.prepro = []
---            , D.typ = ["MyType"]
---            , D.name = "my_var"
---            , D.initVal = Just "tmp_v"
---            }
---  , "testComment normal 2" ~:
---        (exRes $ stParse [] defVariable "    // comment\nMyType my_var = tmp_v;" `feed` "") ~?= Right
---            D.Var {
---              D.prepro = []
---            , D.typ = ["MyType"]
---            , D.name = "my_var"
---            , D.initVal = Just "tmp_v"
---            }
---  ]
+testComment :: Test
+testComment = TestList
+  [ "testComment normal 1" ~:
+        (exRes $ stParse [] defVariable "/* comment */    MyType my_var = tmp_v;" `feed` "") ~?= Right
+            D.Var {
+              D.prepro = []
+            , D.typ = ["MyType"]
+            , D.name = "my_var"
+            , D.initVal = Just (
+                D.Identifire {
+                  D.name = "tmp_v"
+                }
+              )
+            }
+  , "testComment normal 2" ~:
+        (exRes $ stParse [] defVariable "    // comment\nMyType my_var = tmp_v;" `feed` "") ~?= Right
+            D.Var {
+              D.prepro = []
+            , D.typ = ["MyType"]
+            , D.name = "my_var"
+            , D.initVal = Just (
+                D.Identifire {
+                  D.name = "tmp_v"
+                }
+              )
+            }
+  ]
 
 
 -- | testInclude
@@ -425,38 +433,53 @@ testDefVariable = TestList
                 }
               )
             }
---
---  , "testDefVariable pointer 1" ~:
---        (exRes $ stParse [] defVariable "  signed int    *p_val_axz   =  &hoge  ;" `feed` "") ~?= Right
---            D.Var {
---              D.prepro = []
---            , D.typ = ["signed", "int", "*"]
---            , D.name = "p_val_axz"
---            , D.initVal = Just "&hoge"
---            }
---  , "testDefVariable pointer 2" ~:
---        (exRes $ stParse [] defVariable "  signed  * int    **p_val_00d4   =  &hoge  ;" `feed` "") ~?= Right
---            D.Var {
---              D.prepro = []
---            , D.typ = ["signed", "*", "int", "*", "*"]
---            , D.name = "p_val_00d4"
---            , D.initVal = Just "&hoge"
---            }
---  , "testDefVariable prepro 1" ~:
---        (exRes $ stParse [] defVariable testDefVariable_in1 `feed` "") ~?= Right
---            D.Var {
---              D.prepro = [
---                D.Condition {
---                  D.command = "#if"
---                , D.left = "HOGE_SW"
---                , D.op = "=="
---                , D.right = "1"
---                }
---            ]
---            , D.typ = ["char"]
---            , D.name = "condition_variable"
---            , D.initVal = Nothing
---            }
+
+  , "testDefVariable pointer 1" ~:
+        (exRes $ stParse [] defVariable "  signed int    *p_val_axz   =  &hoge  ;" `feed` "") ~?= Right
+            D.Var {
+              D.prepro = []
+            , D.typ = ["signed", "int", "*"]
+            , D.name = "p_val_axz"
+            , D.initVal = Just (
+                D.PreUnary {
+                  D.op = "&"
+                , D.operand = D.Identifire {
+                    D.name = "hoge"
+                  }
+                }
+              )
+            }
+  , "testDefVariable pointer 2" ~:
+        (exRes $ stParse [] defVariable "  signed  * int    **p_val_00d4   =  &hoge  ;" `feed` "") ~?= Right
+            D.Var {
+              D.prepro = []
+            , D.typ = ["signed", "*", "int", "*", "*"]
+            , D.name = "p_val_00d4"
+            , D.initVal = Just (
+                D.PreUnary {
+                  D.op = "&"
+                , D.operand = D.Identifire {
+                    D.name = "hoge"
+                  }
+                }
+              )
+            }
+
+  , "testDefVariable prepro 1" ~:
+        (exRes $ stParse [] defVariable testDefVariable_in1 `feed` "") ~?= Right
+            D.Var {
+              D.prepro = [
+                D.Condition {
+                  D.command = "#if"
+                , D.left = "HOGE_SW"
+                , D.op = "=="
+                , D.right = "1"
+                }
+            ]
+            , D.typ = ["char"]
+            , D.name = "condition_variable"
+            , D.initVal = Nothing
+            }
   ]
 
 -- | testExpr

@@ -82,6 +82,11 @@ data Proc = Call
             }
           deriving (Eq, Show)
 
+-- TODO:
+-- op をメンバの始めに持って
+--
+-- Add とか Sub とかわかりづらいのでやめるかも
+--
 data Exp = Binary
            { left  :: Exp
            , op    :: Operation

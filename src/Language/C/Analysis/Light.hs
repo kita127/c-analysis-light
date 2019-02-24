@@ -10,6 +10,7 @@ module Language.C.Analysis.Light
 , identifire
 , value
 , include
+, expr
 --, preprocess
 --, preproIfStart
 ) where
@@ -73,34 +74,6 @@ tillEndOfLine = lift $ takeTill isEndOfLine *> endOfLine
 
 
 
-
--- | token
---
-token :: SParser a -> SParser a
-token p = spaceOrComment *> p <* spaceOrComment
-
--- | spaceOrComment
---
-spaceOrComment :: SParser ()
-spaceOrComment = skipMany $
-    lift space $> () <|> comment1 <|> comment2
-
--- | comment1
---
-comment1 :: SParser ()
-comment1 = do
-    lift $ string "/*"
-    lift consume
-
-    where
-        consume = string "*/" $> () <|> anyChar *> consume
-
--- | comment2
---
--- // ~~~~~~~~~~~~~
---
-comment2 :: SParser ()
-comment2 = lift $ string "//" *> takeTill isEndOfLine *> endOfLine
 
 
 -- | update
@@ -167,13 +140,6 @@ typeAndID = do
     return (last ids, init ids)
 
 
--- | identifire
---
-identifire :: SParser T.Text
-identifire = token $ do
-    head' <- lift $ letter <|> char '_'
-    tail' <- lift $ many1 idLetter
-    return $ T.pack $ head' : tail'
 
 
 -- | idLetter
@@ -199,26 +165,7 @@ initValue = Just <$> p <|> pure Nothing
         p = equal *> value
 
 
--- | value
---
-value :: SParser T.Text
-value = token $ hex <|> lift (T.pack <$> many1 digit) <|> addressVal <|> identifire
-    where
-        addressVal = do
-            lift $ char '&'
-            n <- identifire
-            return $ '&' `T.cons` n
 
--- | hex
---
-hex :: SParser T.Text
-hex = do
-    lift $ string "0x"
-    n <- p
-    return $ T.pack ('0':'x':n)
-    where
-        p :: SParser String
-        p = lift $ many1 $ satisfy $ inClass "a-fA-F0-9"
 
 
 -- | defFunction
@@ -328,10 +275,6 @@ expressionId :: SParser D.Exp
 expressionId = D.Identifire <$> identifire
 
 
--- | literal
---
-literal :: SParser D.Exp
-literal = D.Literal <$> value
 
 
 -- | operation
@@ -391,11 +334,16 @@ liftAp = liftA2 T.append
 
 -- sample ---------------------------------------------------------------------------
 
-expr :: Parser D.Exp
-expr = buildExpressionParser table term <?> "expression"
+-- | expr
+--
+expr :: SParser D.Exp
+expr = lift expr'
+
+expr' :: Parser D.Exp
+expr' = buildExpressionParser table term <?> "expression"
 
 term :: Parser D.Exp
-term =  parens expr <|> natural <?> "simple expression"
+term =  parens expr' <|> literal' <?> "simple expression"
 
 table :: [[Operator T.Text D.Exp]]
 table = [ [binary' "*" (`D.Binary` D.Mul) AssocLeft, binary' "/" (`D.Binary` D.Div) AssocLeft]
@@ -417,19 +365,105 @@ binary' name fun assoc = Infix (do{ string name; return fun }) assoc
 parens :: Parser a -> Parser a
 parens p = string "(" *> p <* string ")"
 
-natural :: Parser D.Exp
-natural = do
-    s <- decimal
-    let s' = show s
-    return $ D.Literal $ T.pack s'
+
+-- | identifire
+--
+identifire :: SParser T.Text
+identifire = lift identifire'
+
+identifire' :: Parser T.Text
+identifire' = token' $ do
+    head' <- letter <|> char '_'
+    tail' <- many1 idLetter
+    return $ T.pack $ head' : tail'
+
+-- | literal
+--
+literal :: SParser D.Exp
+literal = lift literal'
+
+literal' :: Parser D.Exp
+literal' = D.Literal <$> value'
 
 
-testExpr :: T.Text -> Result D.Exp
-testExpr s = parse expr s `feed` ""
+-- | value
+--
+value :: SParser T.Text
+value = lift value'
+
+value' :: Parser T.Text
+value' = token' $ hex' <|> (T.pack <$> many1 digit) <|> addressVal <|> identifire'
+    where
+        addressVal = do
+            char '&'
+            n <- identifire'
+            return $ '&' `T.cons` n
+
+-- | hex
+--
+hex :: SParser T.Text
+hex = lift hex'
+
+hex' :: Parser T.Text
+hex' = do
+    string "0x"
+    n <- p
+    return $ T.pack ('0':'x':n)
+    where
+        p :: Parser String
+        p = many1 $ satisfy $ inClass "a-fA-F0-9"
+
+
 
 
 
 -- sample ---------------------------------------------------------------------------
+
+
+-- ----------------------------------------------------------------------------------
+-- | lexer
+-- ----------------------------------------------------------------------------------
+
+-- | token
+--
+-- State + Parser 用のトークン関数
+--
+token :: SParser a -> SParser a
+token p = lift spaceOrComment *> p <* lift spaceOrComment
+
+-- | token'
+--
+-- Parser 単体用のトークン関数
+--
+token' :: Parser a -> Parser a
+token' p = spaceOrComment *> p <* spaceOrComment
+
+-- | spaceOrComment
+--
+spaceOrComment :: Parser ()
+spaceOrComment = skipMany $
+    space $> () <|> comment1 <|> comment2
+
+-- | comment1
+--
+comment1 :: Parser ()
+comment1 = do
+    string "/*"
+    consume
+    where
+        consume = string "*/" $> () <|> anyChar *> consume
+
+-- | comment2
+--
+-- // ~~~~~~~~~~~~~
+--
+comment2 :: Parser ()
+comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
+
+
+
+
+
 
 
 

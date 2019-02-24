@@ -28,6 +28,7 @@ main = do
       , testDefVariable
       , testDefFunction
       , testInclude
+      , testExpr
       --, testArguments
 
       --, testPreprocess
@@ -508,6 +509,35 @@ testDefVariable = TestList
             }
   ]
 
+-- | testExpr
+--
+testExpr :: Test
+testExpr = TestList
+  [ "testExpr literal 1" ~:
+        (exRes $ stParse [] expr "123" `feed` "") ~?= Right
+            D.Literal {
+              D.value = "123"
+            }
+  , "testExpr literal space 1" ~:
+        (exRes $ stParse [] expr "   123    " `feed` "") ~?= Right
+            D.Literal {
+              D.value = "123"
+            }
+  , "testExpr addition 1" ~:
+        (exRes $ stParse [] expr "1 + 2" `feed` "") ~?= Right
+            D.Binary {
+              D.left = D.Literal {
+                D.value = "1"
+              }
+            , D.op = D.Add
+            , D.right = D.Literal {
+                D.value = "2"
+              }
+            }
+
+
+
+  ]
 
 
 

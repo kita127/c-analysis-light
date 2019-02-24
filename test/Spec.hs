@@ -507,6 +507,13 @@ testExpr = TestList
               }
             }
 
+
+  , "testExpr  identifire 1" ~:
+        (exRes $ stParse [] expr "hoge_var" `feed` "") ~?= Right
+            D.Identifire {
+              D.name = "hoge_var"
+            }
+
   , "testExpr  multicalc 1" ~:
         (exRes $ stParse [] expr "1 * 2 + 3 / (4 - 5)" `feed` "") ~?= Right
             D.Binary {
@@ -537,11 +544,37 @@ testExpr = TestList
               }
             }
 
-  , "testExpr  identifire 1" ~:
-        (exRes $ stParse [] expr "hoge_var" `feed` "") ~?= Right
-            D.Identifire {
-              D.name = "hoge_var"
+  , "testExpr  multicalc 2" ~:
+        (exRes $ stParse [] expr "hoge * 2 + fuga / (4 - 5)" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Binary {
+                D.op = "*"
+              , D.left = D.Identifire {
+                  D.name = "hoge"
+                }
+              , D.right = D.Literal {
+                  D.value = "2"
+                }
+              }
+            , D.right = D.Binary {
+                D.op = "/"
+              , D.left = D.Identifire {
+                  D.name = "fuga"
+                }
+              , D.right = D.Binary {
+                  D.op = "-"
+                , D.left = D.Literal {
+                    D.value = "4"
+                  }
+                , D.right = D.Literal {
+                    D.value = "5"
+                  }
+                }
+              }
             }
+
+
 
   ]
 

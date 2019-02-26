@@ -215,25 +215,26 @@ block = do
 -- | process
 --
 process :: SParser D.Proc
-process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> aloneExp
+--process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> exprState
+process = exprState
 
 
 -- | funcReturn
 --
-funcReturn :: SParser D.Proc
-funcReturn = update $ D.Return <$> get <* returnKey <* sParen <*> value <* eParen <* semicolon
+--funcReturn :: SParser D.Proc
+--funcReturn = update $ D.Return <$> get <* returnKey <* sParen <*> value <* eParen <* semicolon
 
 -- | callFunc
 --
-callFunc :: SParser D.Proc
-callFunc = update $ do
-    f <- identifire
-    sParen
-    a <- expression `sepBy` comma
-    eParen
-    semicolon
-    s <- get
-    return $ D.Call s f a
+--callFunc :: SParser D.Proc
+--callFunc = update $ do
+--    f <- identifire
+--    sParen
+--    a <- expression `sepBy` comma
+--    eParen
+--    semicolon
+--    s <- get
+--    return $ D.Call s f a
 
 -- | strLiteral
 --
@@ -246,18 +247,18 @@ strLiteral = token $ lift $ do
 
 -- | localVariable
 --
-localVariable :: SParser D.Proc
-localVariable = update $ D.LVar <$> get <*> defVariable
+--localVariable :: SParser D.Proc
+--localVariable = update $ D.LVar <$> get <*> defVariable
 
 -- | assigne
 --
-assigne :: SParser D.Proc
-assigne = update $ D.Assigne <$> get <*> identifire <* equal <*> expression <* semicolon
+--assigne :: SParser D.Proc
+--assigne = update $ D.Assigne <$> get <*> identifire <* equal <*> expression <* semicolon
 
--- | aloneExp
+-- | exprState
 --
-aloneExp :: SParser D.Proc
-aloneExp = update $ D.Exprssions <$> get <*> expression <* semicolon
+exprState :: SParser D.Proc
+exprState = update $ D.ExpState <$> get <*> expr <* semicolon
 
 -- | expression
 --
@@ -297,7 +298,7 @@ expr' :: Parser D.Exp
 expr' = buildExpressionParser table term <?> "expression"
 
 term :: Parser D.Exp
-term =  parens' expr' <|> id' <|> literal' <?> "simple expression"
+term =  parens' expr' <|> call' <|> id' <|> literal' <?> "simple expression"
     where
         id' = D.Identifire <$> identifire'
 
@@ -316,6 +317,13 @@ binary' :: T.Text -> (D.Exp -> D.Exp -> D.Exp) -> Assoc -> Operator T.Text D.Exp
 binary' name fun assoc = Infix (do{ string name; return fun }) assoc
 prefix  name fun       = Prefix (do{ string name; return fun })
 --postfix name fun       = Postfix (do{ string name; return fun })
+
+-- | call'
+call' :: Parser D.Exp
+call' = do
+    f <- identifire'
+    as <- parens' $ expr' `sepBy` comma'
+    return $ D.Call f as
 
 
 
@@ -396,14 +404,29 @@ returnKey = token $ lift $ string "return" $> ()
 
 -- | sParen
 --
+-- TODO:
+-- parens あるので消し去りたい
+--
 sParen :: SParser ()
 sParen = token $ lift $ char '(' $> ()
 
 sParen' :: Parser ()
 sParen' = token' $ char '(' $> ()
 
+-- | comma
+--
+comma :: SParser Char
+comma = lift comma'
+
+-- | comma'
+--
+comma' :: Parser Char
+comma' = char ','
 
 -- | eParen
+--
+-- TODO:
+-- parens あるので消し去りたい
 --
 eParen :: SParser ()
 eParen = token $ lift $ char ')' $> ()
@@ -413,10 +436,16 @@ eParen' = token' $ char ')' $> ()
 
 -- | sBracket
 --
+-- TODO:
+-- parens ぽいの作ってこれも消し去りたい
+--
 sBracket :: SParser ()
 sBracket = token $ lift $ char '{' $> ()
 
 -- | eBracket
+--
+-- TODO:
+-- parens ぽいの作ってこれも消し去りたい
 --
 eBracket :: SParser ()
 eBracket = token $ lift $ char '}' $> ()
@@ -432,10 +461,6 @@ semicolon :: SParser ()
 semicolon = token $ lift $ char ';' $> ()
 
 
--- | comma
---
-comma :: SParser Char
-comma = lift $ char ','
 
 
 -- | liftAp

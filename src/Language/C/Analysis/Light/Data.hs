@@ -58,14 +58,9 @@ data Cstate = Var
             deriving (Eq, Show)
 
 -- TODO:
--- Exprssions を式文とかにしたい
+-- Proc -> State とかにしたい
 --
-data Proc = Call
-            { prepro :: [Condition]
-            , name   :: T.Text
-            , args   :: [Exp]
-            }
-          | Return
+data Proc = Return
             { prepro :: [Condition]
             , value  :: T.Text
             }
@@ -78,7 +73,7 @@ data Proc = Call
             , left   :: T.Text
             , right  :: Exp
             }
-          | Exprssions
+          | ExpState
             { prepro   :: [Condition]
             , contents :: Exp
             }
@@ -92,6 +87,10 @@ data Exp = PreUnary
            { op    :: T.Text
            , left  :: Exp
            , right :: Exp
+           }
+         | Call
+           { func :: T.Text
+           , args :: [Exp]
            }
          | Identifire
            { name :: T.Text }

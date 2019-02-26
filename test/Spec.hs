@@ -128,66 +128,10 @@ testIdentifire = TestList
 
 
 
--- | testDefFunction input
---
--- | 1
---
-testDefFunction_in1 = [r|
-void hoge_func( void )
-{
-}
-|]
-
--- | 2
---
-testDefFunction_in2 = [r|
-void hoge_func__1(    int arg1   )
-{
-
-}
-|]
-
-
-
-
-
 
 testDefFunction :: Test
 testDefFunction = TestList
   [ "testDefFunction normal 1" ~:
-        (exRes $ stParse [] defFunction testDefFunction_in1 `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["void"]
-            , D.name   = "hoge_func"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = []
-            }
-  , "testDefFunction normal 2" ~:
-        (exRes $ stParse [] defFunction testDefFunction_in2 `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["void"]
-            , D.name   = "hoge_func__1"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["int"]
-                , D.name = "arg1"
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = []
-            }
-
-  , "testDefFunction normal 3" ~:
         (exRes $ stParse [] defFunction [r|
 static int * mul_ret_arg_f ( char hoge, int *p_fuga )
 {
@@ -214,89 +158,16 @@ static int * mul_ret_arg_f ( char hoge, int *p_fuga )
             , D.procs = []
             }
 
-  , "testDefFunction call 1" ~:
+  , "testDefFunction expression expState 1" ~:
         (exRes $ stParse [] defFunction [r|
-int main( void )
+int func( void )
 {
-    printf("Hellow World\n");
-
-    return (0);
+    1 + 2;
 }
 |] `feed` "") ~?= Right
             D.Func {
               D.prepro = []
             , D.return = ["int"]
-            , D.name   = "main"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = [
-                D.Call {
-                  D.prepro = []
-                , D.name = "printf"
-                , D.args = [
-                    D.StrLiteral {D.value = "Hellow World\\n"}
-                  ]
-                }
-              , D.Return {
-                  D.prepro = []
-                , D.value = "0"
-                }
-              ]
-            }
-
-  , "testDefFunction call 2" ~:
-        (exRes $ stParse [] defFunction [r|
-int main( void )
-{
-    printf("local_var ...%d\n", local_var);
-
-    return (0);
-}
-|] `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["int"]
-            , D.name   = "main"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = [
-                D.Call {
-                  D.prepro = []
-                , D.name = "printf"
-                , D.args = [
-                    D.StrLiteral {D.value = "local_var ...%d\\n"}
-                  , D.Identifire {D.name = "local_var"}
-                  ]
-                }
-              , D.Return {
-                  D.prepro = []
-                , D.value = "0"
-                }
-              ]
-            }
-
-  , "testDefFunction local var 1" ~:
-        (exRes $ stParse [] defFunction [r|
-void func( void )
-{
-    int local_var;
-}
-|] `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["void"]
             , D.name   = "func"
             , D.args   = [
                 D.Var {
@@ -307,28 +178,31 @@ void func( void )
                 }
               ]
             , D.procs = [
-                D.LVar {
+                D.ExpState {
                   D.prepro = []
-                , D.var = D.Var {
-                    D.prepro = []
-                  , D.typ = ["int"]
-                  , D.name = "local_var"
-                  , D.initVal = Nothing
+                , D.contents = D.Binary {
+                    D.op = "+"
+                  , D.left = D.Literal {
+                      D.value = "1"
+                    }
+                  , D.right = D.Literal {
+                      D.value = "2"
+                    }
                   }
                 }
               ]
             }
 
-  , "testDefFunction assigne 1" ~:
+  , "testDefFunction expression call 1" ~:
         (exRes $ stParse [] defFunction [r|
-void func( void )
+int func( void )
 {
-    local_var = 2;
+    hoge(abc, 1);
 }
 |] `feed` "") ~?= Right
             D.Func {
               D.prepro = []
-            , D.return = ["void"]
+            , D.return = ["int"]
             , D.name   = "func"
             , D.args   = [
                 D.Var {
@@ -339,13 +213,26 @@ void func( void )
                 }
               ]
             , D.procs = [
-                D.Assigne{
+                D.ExpState {
                   D.prepro = []
-                , D.left = "local_var"
-                , D.right = D.Literal {value = "2"}
+                , D.contents = D.Call {
+                    D.func = "hoge"
+                  , D.args = [
+                      D.Identifire {
+                        D.name = "abc"
+                      }
+                    , D.Literal {
+                        D.value = "1"
+                      }
+                    ]
+                  }
                 }
               ]
             }
+
+
+
+
   ]
 
 

@@ -127,8 +127,8 @@ testIdentifire = TestList
   ]
 
 
-
-
+-- | testDefFunction
+--
 testDefFunction :: Test
 testDefFunction = TestList
   [ "testDefFunction normal 1" ~:
@@ -192,85 +192,6 @@ int func( void )
                 }
               ]
             }
-
-  , "testDefFunction expression call 1" ~:
-        (exRes $ stParse [] defFunction [r|
-int func( void )
-{
-    hoge(abc, 1 + 3);
-}
-|] `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["int"]
-            , D.name   = "func"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = [
-                D.ExpState {
-                  D.prepro = []
-                , D.contents = D.Call {
-                    D.func = "hoge"
-                  , D.args = [
-                      D.Identifire {
-                        D.name = "abc"
-                      }
-                    , D.Binary {
-                        D.op = "+"
-                      , D.left = D.Literal {
-                          D.value = "1"
-                        }
-                      , D.right = D.Literal {
-                          D.value = "3"
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-
-  , "testDefFunction expression assigne 1" ~:
-        (exRes $ stParse [] defFunction [r|
-int func( void )
-{
-    hoge = 100;
-}
-|] `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["int"]
-            , D.name   = "func"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = [
-                D.ExpState {
-                  D.prepro = []
-                , D.contents = D.Binary {
-                    D.op = "="
-                  , D.left = D.Identifire {
-                      D.name = "hoge"
-                    }
-                  , D.right = D.Literal {
-                      D.value = "100"
-                    }
-                  }
-                }
-              ]
-            }
-
 
 
   ]
@@ -487,6 +408,44 @@ testExpr = TestList
         (exRes $ stParse [] expr "hoge_var" `feed` "") ~?= Right
             D.Identifire {
               D.name = "hoge_var"
+            }
+
+  , "testExpr  call 1" ~:
+        (exRes $ stParse [] expr "func_xxx(abc, 1 + 2)" `feed` "") ~?= Right
+            D.Call {
+              D.func = "func_xxx"
+            , D.args = [
+                D.Identifire {
+                  D.name = "abc"
+                }
+              , D.Binary {
+                  D.op = "+"
+                , D.left = D.Literal {
+                    D.value = "1"
+                  }
+                , D.right = D.Literal {
+                    D.value = "2"
+                  }
+                }
+              ]
+            }
+
+  , "testExpr  assigne 1" ~:
+        (exRes $ stParse [] expr "hoge = 99 - 5" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "="
+            , D.left = D.Identifire {
+                D.name = "hoge"
+              }
+            , D.right = D.Binary {
+                D.op = "-"
+              , D.left = D.Literal {
+                  D.value = "99"
+                }
+              , D.right = D.Literal {
+                  D.value = "5"
+                }
+              }
             }
 
   , "testExpr  multicalc 1" ~:

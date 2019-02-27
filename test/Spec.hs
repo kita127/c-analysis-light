@@ -23,7 +23,6 @@ main = do
       [ testSample
       , testToken
       , testComment
-      , testValue
       , testIdentifire
       , testDefVariable
       , testDefFunction
@@ -99,19 +98,6 @@ testInclude = TestList
   ]
 
 
-testValue :: Test
-testValue = TestList
-  [ "testValue normal 1" ~:
-        (exRes $ stParse [] value "VALUE" `feed` "") ~?= Right "VALUE"
-  , "testValue normal 2" ~:
-        (exRes $ stParse [] value "234" `feed` "") ~?= Right "234"
-  , "testValue hex 1" ~:
-        (exRes $ stParse [] value "0xA5" `feed` "") ~?= Right "0xA5"
-  , "testValue oct 1" ~:
-        (exRes $ stParse [] value "036" `feed` "") ~?= Right "036"
-  , "testValue address 1" ~:
-        (exRes $ stParse [] value "&hoge" `feed` "") ~?= Right "&hoge"
-  ]
 
 
 
@@ -268,14 +254,6 @@ int func( void )
   ]
 
 
-testDefVariable_in1 = [r|
-#if HOGE_SW == 1
-
-char condition_variable;
-
-#endif    /* HOGE_SW */
-|]
-
 
 testDefVariable :: Test
 testDefVariable = TestList
@@ -385,16 +363,28 @@ testDefVariable = TestList
             }
 
   , "testDefVariable prepro 1" ~:
-        (exRes $ stParse [] defVariable testDefVariable_in1 `feed` "") ~?= Right
+        (exRes $ stParse [] defVariable [r|
+#if HOGE_SW == 1
+
+char condition_variable;
+
+#endif    /* HOGE_SW */
+|] `feed` "") ~?= Right
             D.Var {
               D.prepro = [
                 D.Condition {
                   D.command = "#if"
-                , D.left = "HOGE_SW"
-                , D.op = "=="
-                , D.right = "1"
+                , D.expr = D.Binary {
+                    D.op = "=="
+                  , D.left = D.Identifire {
+                      D.name = "HOGE_SW"
+                    }
+                  , D.right = D.Literal {
+                      D.value = "1"
+                    }
+                  }
                 }
-            ]
+              ]
             , D.typ = ["char"]
             , D.name = "condition_variable"
             , D.initVal = Nothing

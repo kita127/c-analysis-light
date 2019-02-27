@@ -15,9 +15,7 @@ import qualified Data.Text            as T
 
 data Condition = Condition
                  { command :: T.Text
-                 , left    :: T.Text
-                 , op      :: T.Text
-                 , right   :: T.Text
+                 , expr    :: Exp
                  }
                  deriving (Eq, Show)
 

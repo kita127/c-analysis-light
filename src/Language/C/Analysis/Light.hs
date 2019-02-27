@@ -8,7 +8,6 @@ module Language.C.Analysis.Light
 , defVariable
 , defFunction
 , identifire
-, value
 , include
 , expr
 --, preprocess
@@ -96,10 +95,8 @@ update p = do
 condStart :: SParser D.Condition
 condStart = do
     c <- token $ lift $ string "#if"
-    l <- identifire
-    o <- token $ lift $ string "=="
-    r <- value
-    return $ D.Condition c l o r
+    e <- expr
+    return $ D.Condition c e
 
 -- | condEnd
 --
@@ -230,10 +227,11 @@ term =  parens' expr' <|> call' <|> id' <|> literal' <?> "simple expression"
         id' = D.Identifire <$> identifire'
 
 table :: [[Operator T.Text D.Exp]]
-table = [ [prefix  "&" (D.PreUnary "&")]                                                        -- 2
-        , [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]          -- 3  : Left
-        , [binary' "+" (D.Binary "+") AssocLeft, binary' "-" (D.Binary "-") AssocLeft]          -- 4  : Left
-        , [binary' "=" (D.Binary "=") AssocRight]                                               -- 14 : Right
+table = [ [prefix  "&"  (D.PreUnary "&")]                                                         -- 2
+        , [binary' "*"  (D.Binary "*" ) AssocLeft, binary' "/" (D.Binary "/") AssocLeft]          -- 3  : Left
+        , [binary' "+"  (D.Binary "+" ) AssocLeft, binary' "-" (D.Binary "-") AssocLeft]          -- 4  : Left
+        , [binary' "==" (D.Binary "==") AssocRight]                                               -- 7  : Left
+        , [binary' "="  (D.Binary "=" ) AssocRight]                                               -- 14 : Right
         ]
 --table = [ [prefix "-" negate, prefix "+" id ]
 --        , [postfix "++" (+1)]
@@ -289,21 +287,6 @@ identifire' = token' $ do
 idLetter' :: Parser Char
 idLetter' = letter <|> digit <|> char '_'
 
--- | value
---
--- TODO:
--- value は expression に置き換えるので削除予定
---
-value :: SParser T.Text
-value = lift value'
-
-value' :: Parser T.Text
-value' = token' $ hex' <|> (T.pack <$> many1 digit) <|> addressVal <|> identifire'
-    where
-        addressVal = do
-            char '&'
-            n <- identifire'
-            return $ '&' `T.cons` n
 
 -- | integer
 --

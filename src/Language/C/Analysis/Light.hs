@@ -222,7 +222,7 @@ expr' = buildExpressionParser table term <?> "expression"
 -- TODO:関数コールもテーブルに含めたい
 --
 term :: Parser D.Exp
-term =  parens' expr' <|> call' <|> id' <|> literal' <?> "simple expression"
+term =  parens' expr' <|> call' <|> id' <|> literal' <|> strLiteral' <?> "simple expression"
     where
         id' = D.Identifire <$> identifire'
 
@@ -255,6 +255,8 @@ call' = do
 
 -- | literal
 --
+-- TODO:トークン化する
+--
 literal :: SParser D.Exp
 literal = lift literal'
 
@@ -263,12 +265,8 @@ literal' = D.Literal <$> (hex' <|> integer')
 
 -- | strLiteral
 --
-strLiteral :: SParser D.Exp
-strLiteral = token $ lift $ do
-    char '"'
-    s <- takeTill (== '"')
-    char '"'
-    return $ D.StrLiteral s
+strLiteral' :: Parser D.Exp
+strLiteral' = token' $ D.StrLiteral <$ char '"' <*> takeTill (== '"') <* char '"'
 
 
 -- | identifire

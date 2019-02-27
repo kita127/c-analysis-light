@@ -407,6 +407,12 @@ testExpr = TestList
               D.value = "123"
             }
 
+  , "testExpr str literal 1" ~:
+        (exRes $ stParse [] expr [r|"Hello world\n"|] `feed` "") ~?= Right
+            D.StrLiteral {
+              D.value = "Hello world\\n"
+            }
+
   , "testExpr ampersand 1" ~:
         (exRes $ stParse [] expr "&hoge" `feed` "") ~?= Right
             D.PreUnary {

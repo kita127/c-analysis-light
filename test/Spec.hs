@@ -229,6 +229,41 @@ int func( void )
               ]
             }
 
+  , "testDefFunction return 1" ~:
+        (exRes $ stParse [] defFunction [r|
+int func( void )
+{
+    return (100 + 51);
+}
+|] `feed` "") ~?= Right
+            D.Func {
+              D.prepro = []
+            , D.return = ["int"]
+            , D.name   = "func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
+                }
+              ]
+            , D.procs = [
+                D.Return {
+                  D.prepro = []
+                , D.operand = D.Binary {
+                    D.op = "+"
+                  , D.left = D.Literal {
+                      D.value = "100"
+                    }
+                  , D.right = D.Literal {
+                      D.value = "51"
+                    }
+                  }
+                }
+              ]
+            }
+
 
   ]
 

@@ -61,8 +61,8 @@ data Cstate = Var
 -- Proc -> State とかにしたい
 --
 data Proc = Return
-            { prepro :: [Condition]
-            , value  :: T.Text
+            { prepro  :: [Condition]
+            , operand :: Exp
             }
           | LVar
             { prepro :: [Condition]

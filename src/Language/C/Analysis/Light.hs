@@ -216,9 +216,10 @@ block = do
 --
 process :: SParser D.Proc
 --process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> exprState
-process = defLVariable <|> exprState
+process = funcRet <|> defLVariable <|> exprState
     where
         defLVariable = D.LVar <$> get <*> defVariable
+        funcRet = D.Return <$> get <* retKey <*> expr <* semicolon
 
 
 -- | funcReturn
@@ -401,10 +402,10 @@ parens p = sParen *> p <* eParen
 parens' :: Parser a -> Parser a
 parens' p = sParen' *> p <* eParen'
 
--- | returnKey
+-- | retKey
 --
-returnKey :: SParser ()
-returnKey = token $ lift $ string "return" $> ()
+retKey :: SParser ()
+retKey = token $ lift $ string "return" $> ()
 
 -- | sParen
 --

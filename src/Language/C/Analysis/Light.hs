@@ -216,7 +216,9 @@ block = do
 --
 process :: SParser D.Proc
 --process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> exprState
-process = exprState
+process = defLVariable <|> exprState
+    where
+        defLVariable = D.LVar <$> get <*> defVariable
 
 
 -- | funcReturn

@@ -68,11 +68,6 @@ data Proc = Return
             { prepro :: [Condition]
             , var    :: Cstate
             }
-          | Assigne
-            { prepro :: [Condition]
-            , left   :: T.Text
-            , right  :: Exp
-            }
           | ExpState
             { prepro   :: [Condition]
             , contents :: Exp

@@ -193,6 +193,42 @@ int func( void )
               ]
             }
 
+  , "testDefFunction local var 1" ~:
+        (exRes $ stParse [] defFunction [r|
+int func( void )
+{
+    char local_var = VALUE;
+}
+|] `feed` "") ~?= Right
+            D.Func {
+              D.prepro = []
+            , D.return = ["int"]
+            , D.name   = "func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
+                }
+              ]
+            , D.procs = [
+                D.LVar {
+                  D.prepro = []
+                , D.var = D.Var {
+                    D.prepro = []
+                  , D.typ = ["char"]
+                  , D.name = "local_var"
+                  , D.initVal = Just (
+                      D.Identifire {
+                        D.name = "VALUE"
+                      }
+                    )
+                  }
+                }
+              ]
+            }
+
 
   ]
 

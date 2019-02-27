@@ -316,13 +316,9 @@ hex :: SParser T.Text
 hex = lift hex'
 
 hex' :: Parser T.Text
-hex' = do
-    string "0x"
-    n <- p
-    return $ T.pack ('0':'x':n)
+hex' = T.append <$> string "0x" <*> p
     where
-        p :: Parser String
-        p = many1 $ satisfy $ inClass "a-fA-F0-9"
+        p = fmap T.pack $ many1 $ satisfy $ inClass "a-fA-F0-9"
 
 -- ----------------------------------------------------------------------------------
 -- | keywords

@@ -197,7 +197,7 @@ int func( void )
         (exRes $ stParse [] defFunction [r|
 int func( void )
 {
-    hoge(abc, 1);
+    hoge(abc, 1 + 3);
 }
 |] `feed` "") ~?= Right
             D.Func {
@@ -221,8 +221,14 @@ int func( void )
                       D.Identifire {
                         D.name = "abc"
                       }
-                    , D.Literal {
-                        D.value = "1"
+                    , D.Binary {
+                        D.op = "+"
+                      , D.left = D.Literal {
+                          D.value = "1"
+                        }
+                      , D.right = D.Literal {
+                          D.value = "3"
+                        }
                       }
                     ]
                   }
@@ -230,6 +236,40 @@ int func( void )
               ]
             }
 
+  , "testDefFunction expression assigne 1" ~:
+        (exRes $ stParse [] defFunction [r|
+int func( void )
+{
+    hoge = 100;
+}
+|] `feed` "") ~?= Right
+            D.Func {
+              D.prepro = []
+            , D.return = ["int"]
+            , D.name   = "func"
+            , D.args   = [
+                D.Var {
+                  D.prepro = []
+                , D.typ = ["void"]
+                , D.name = ""
+                , D.initVal = Nothing
+                }
+              ]
+            , D.procs = [
+                D.ExpState {
+                  D.prepro = []
+                , D.contents = D.Binary {
+                    D.op = "="
+                  , D.left = D.Identifire {
+                      D.name = "hoge"
+                    }
+                  , D.right = D.Literal {
+                      D.value = "100"
+                    }
+                  }
+                }
+              ]
+            }
 
 
 

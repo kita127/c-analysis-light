@@ -297,15 +297,18 @@ expr = lift expr'
 expr' :: Parser D.Exp
 expr' = buildExpressionParser table term <?> "expression"
 
+-- TODO:関数コールもテーブルに含めたい
+--
 term :: Parser D.Exp
 term =  parens' expr' <|> call' <|> id' <|> literal' <?> "simple expression"
     where
         id' = D.Identifire <$> identifire'
 
 table :: [[Operator T.Text D.Exp]]
-table = [ [prefix  "&" (D.PreUnary "&")]
-        , [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]
-        , [binary' "+" (D.Binary "+") AssocLeft, binary' "-" (D.Binary "-") AssocLeft]
+table = [ [prefix  "&" (D.PreUnary "&")]                                                        -- 2
+        , [binary' "*" (D.Binary "*") AssocLeft, binary' "/" (D.Binary "/") AssocLeft]          -- 3  : Left
+        , [binary' "+" (D.Binary "+") AssocLeft, binary' "-" (D.Binary "-") AssocLeft]          -- 4  : Left
+        , [binary' "=" (D.Binary "=") AssocRight]                                               -- 14 : Right
         ]
 --table = [ [prefix "-" negate, prefix "+" id ]
 --        , [postfix "++" (+1)]
@@ -324,7 +327,6 @@ call' = do
     f <- identifire'
     as <- parens' $ expr' `sepBy` comma'
     return $ D.Call f as
-
 
 
 
@@ -453,7 +455,12 @@ eBracket = token $ lift $ char '}' $> ()
 -- | equal
 --
 equal :: SParser ()
-equal = token $ lift $ char '=' $> ()
+equal = lift equal'
+
+-- | equal'
+--
+equal' :: Parser ()
+equal' = token' $ char '=' $> ()
 
 -- | semicolon
 --

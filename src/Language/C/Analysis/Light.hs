@@ -48,7 +48,6 @@ analyze s = case parse (p <* endOfInput) s `feed` "" of
 --
 cLang :: SParser D.C
 cLang = preprocess <|> statement <|> pure D.End
---cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure D.End
 
 -- | preprocess
 --
@@ -71,8 +70,6 @@ file = lift (string "<") `liftAp` identifire `liftAp` lift (string ".h") `liftAp
 --
 tillEndOfLine :: SParser ()
 tillEndOfLine = lift $ takeTill isEndOfLine *> endOfLine
-
-
 
 
 
@@ -142,11 +139,6 @@ typeAndID = do
 
 
 
--- | idLetter
---
-idLetter :: Parser Char
-idLetter = letter <|> digit <|> char '_'
-
 
 
 -- | pointer
@@ -165,17 +157,12 @@ initValue = Just <$> p <|> pure Nothing
         p = equal *> expr
 
 
-
-
-
 -- | defFunction
 --
 defFunction :: SParser D.Cstate
 defFunction = do
     (name, ret) <- typeAndID
-    sParen
-    args <- arguments
-    eParen
+    args <- parens arguments
     p <- block
     s <- get
     return $ D.Func s ret name args p
@@ -205,92 +192,27 @@ justArgs = (`sepBy1` comma) $ do
 -- | block
 --
 block :: SParser [D.Proc]
-block = do
-    sBracket
-    ps <- many' $ process
-    eBracket
-    return ps
+block = brackets $ many' process
 
 
 -- | process
 --
 process :: SParser D.Proc
---process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> exprState
 process = funcRet <|> defLVariable <|> exprState
     where
         defLVariable = D.LVar <$> get <*> defVariable
         funcRet = D.Return <$> get <* retKey <*> expr <* semicolon
 
 
--- | funcReturn
---
---funcReturn :: SParser D.Proc
---funcReturn = update $ D.Return <$> get <* returnKey <* sParen <*> value <* eParen <* semicolon
-
--- | callFunc
---
---callFunc :: SParser D.Proc
---callFunc = update $ do
---    f <- identifire
---    sParen
---    a <- expression `sepBy` comma
---    eParen
---    semicolon
---    s <- get
---    return $ D.Call s f a
-
--- | strLiteral
---
-strLiteral :: SParser D.Exp
-strLiteral = token $ lift $ do
-    char '"'
-    s <- takeTill (== '"')
-    char '"'
-    return $ D.StrLiteral s
-
--- | localVariable
---
---localVariable :: SParser D.Proc
---localVariable = update $ D.LVar <$> get <*> defVariable
-
--- | assigne
---
---assigne :: SParser D.Proc
---assigne = update $ D.Assigne <$> get <*> identifire <* equal <*> expression <* semicolon
-
 -- | exprState
 --
 exprState :: SParser D.Proc
 exprState = update $ D.ExpState <$> get <*> expr <* semicolon
 
+
+-- ----------------------------------------------------------------------------------
 -- | expression
---
-expression :: SParser D.Exp
-expression = binary <|> expressionId <|> strLiteral <|> literal
-
--- | binary
---
-binary :: SParser D.Exp
-binary = D.Binary <$> operation <*> literal <*> literal
-
--- | expressionId
---
-expressionId :: SParser D.Exp
-expressionId = D.Identifire <$> identifire
-
-
-
-
--- | operation
---
-operation :: SParser T.Text
-operation = token $ lift $ string "+"
-
-
-
-
-
-
+-- ----------------------------------------------------------------------------------
 
 -- | expr
 --
@@ -341,6 +263,14 @@ literal = lift literal'
 literal' :: Parser D.Exp
 literal' = D.Literal <$> (hex' <|> integer')
 
+-- | strLiteral
+--
+strLiteral :: SParser D.Exp
+strLiteral = token $ lift $ do
+    char '"'
+    s <- takeTill (== '"')
+    char '"'
+    return $ D.StrLiteral s
 
 
 -- | identifire
@@ -351,10 +281,13 @@ identifire = lift identifire'
 identifire' :: Parser T.Text
 identifire' = token' $ do
     head' <- letter <|> char '_'
-    tail' <- many1 idLetter
+    tail' <- many1 idLetter'
     return $ T.pack $ head' : tail'
 
-
+-- | idLetter'
+--
+idLetter' :: Parser Char
+idLetter' = letter <|> digit <|> char '_'
 
 -- | value
 --
@@ -398,25 +331,22 @@ hex' = do
 --
 parens :: SParser a -> SParser a
 parens p = sParen *> p <* eParen
+    where
+        sParen = token $ lift $ char '(' $> ()
+        eParen = token $ lift $ char ')' $> ()
 
 parens' :: Parser a -> Parser a
 parens' p = sParen' *> p <* eParen'
+    where
+        sParen' = token' $ char '(' $> ()
+        eParen' = token' $ char ')' $> ()
+
 
 -- | retKey
 --
 retKey :: SParser ()
 retKey = token $ lift $ string "return" $> ()
 
--- | sParen
---
--- TODO:
--- parens あるので消し去りたい
---
-sParen :: SParser ()
-sParen = token $ lift $ char '(' $> ()
-
-sParen' :: Parser ()
-sParen' = token' $ char '(' $> ()
 
 -- | comma
 --
@@ -428,32 +358,20 @@ comma = lift comma'
 comma' :: Parser Char
 comma' = char ','
 
--- | eParen
+-- | brackets
 --
--- TODO:
--- parens あるので消し去りたい
---
-eParen :: SParser ()
-eParen = token $ lift $ char ')' $> ()
+brackets :: SParser a -> SParser a
+brackets p = sBracket *> p <* eBracket
+    where
+        sBracket = token $ lift $ char '{' $> ()
+        eBracket = token $ lift $ char '}' $> ()
 
-eParen' :: Parser ()
-eParen' = token' $ char ')' $> ()
 
--- | sBracket
---
--- TODO:
--- parens ぽいの作ってこれも消し去りたい
---
-sBracket :: SParser ()
-sBracket = token $ lift $ char '{' $> ()
-
--- | eBracket
---
--- TODO:
--- parens ぽいの作ってこれも消し去りたい
---
-eBracket :: SParser ()
-eBracket = token $ lift $ char '}' $> ()
+brackets' :: Parser a -> Parser a
+brackets' p = sBracket' *> p <* eBracket'
+    where
+        sBracket' = token' $ char '{' $> ()
+        eBracket' = token' $ char '}' $> ()
 
 -- | equal
 --
@@ -469,19 +387,6 @@ equal' = token' $ char '=' $> ()
 --
 semicolon :: SParser ()
 semicolon = token $ lift $ char ';' $> ()
-
-
-
-
--- | liftAp
---
--- T.append の リフト関数
---
-liftAp :: Applicative f => f T.Text -> f T.Text -> f T.Text
-liftAp = liftA2 T.append
-
-
-
 
 
 
@@ -526,51 +431,18 @@ comment2 :: Parser ()
 comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
 
 
+-- ----------------------------------------------------------------------------------
+-- | 補助関数
+-- ----------------------------------------------------------------------------------
+
+-- | liftAp
+--
+-- T.append の リフト関数
+--
+liftAp :: Applicative f => f T.Text -> f T.Text -> f T.Text
+liftAp = liftA2 T.append
 
 
 
 
 
-
----- | preprocess
-----
---preprocess :: [T.Text] -> Parser D.C
---preprocess pre = D.Prepro <$> pure pre <*> include <*> cLang pre
---
---
---
---
-
-
----- | preproIfStart
-----
---preproIfStart :: Parser D.C
---preproIfStart = do
---    skipMany space
---    s <- p
---    d <- statement $ pure s
---    return d
---    where
---        p = preIfState
---
----- | preIfState
-----
---preIfState :: Parser T.Text
---preIfState = do
---    preCond <- token $ string "#if"
---    left    <- token identifire
---    ex      <- token $ string "=="
---    right   <- value
---    tillEndOfLine
---    return $ T.intercalate " " [preCond, left, ex, right]
---
----- | preproIfEnd
-----
---preproIfEnd :: Parser D.C
---preproIfEnd = do
---    token $ string "#endif"
---    cLang mempty
---
---
---
---

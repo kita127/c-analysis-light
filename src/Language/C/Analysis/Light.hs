@@ -252,13 +252,11 @@ call' = do
 
 -- | literal
 --
--- TODO:トークン化する
---
 literal :: SParser D.Exp
 literal = lift literal'
 
 literal' :: Parser D.Exp
-literal' = D.Literal <$> (hex' <|> integer')
+literal' = token' $ D.Literal <$> (hex' <|> integer')
 
 -- | strLiteral
 --

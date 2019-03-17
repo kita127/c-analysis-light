@@ -10,17 +10,9 @@ import           Language.C.Analysis.Light.Data as DATA
 -- import           Data.Aeson.TH
 -- import           Data.Aeson
 
--- | convList
---
--- TODO:
--- Json に End のゴミが残るの直したい
---
-convList :: DATA.C -> [DATA.C]
-convList DATA.End = []
-convList c        = c{DATA.next = End} : convList (DATA.next c)
 
 
 -- | encodeJson
 --
-encodeJson :: DATA.C -> B.ByteString
-encodeJson = PA.encodePretty . convList
+encodeJson :: DATA.Ast -> B.ByteString
+encodeJson = PA.encodePretty

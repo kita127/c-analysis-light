@@ -35,25 +35,30 @@ type TypeStr = T.Text
 
 -- | analyze
 --
-analyze :: T.Text -> Either String D.C
+analyze :: T.Text -> Either String D.Ast
 analyze s = case parse (p <* endOfInput) s `feed` "" of
     (Done _ r)    -> Right r
     (Fail i ss w) -> Left $ intercalate " : " ((show i):w:ss)
     (Partial _)   -> Left "partial ..."
     where
-        p = (`evalStateT` []) cLang
+        p = (`evalStateT` []) program
+
+-- | program
+--
+program :: SParser D.Ast
+program = D.Ast <$> many' cLang
 
 -- | cLang
 --
 -- TODO: AST をトップとする
 --
-cLang :: SParser D.C
-cLang = preprocess <|> statement <|> pure D.End
+cLang :: SParser D.Statement
+cLang = preprocess <|> statement
 
 -- | preprocess
 --
-preprocess :: SParser D.C
-preprocess = D.Prepro <$> include <*> cLang
+preprocess :: SParser D.Statement
+preprocess = D.Preprocess <$> include
 
 
 -- | include
@@ -109,10 +114,10 @@ condEnd = token $ lift $ string "#endif" *> pure ()
 
 -- | statement
 --
-statement :: SParser D.C
+statement :: SParser D.Statement
 statement =
-        D.Csrc <$> defVariable <*> cLang
-    <|> D.Csrc <$> defFunction <*> cLang
+        D.Csrc <$> defVariable
+    <|> D.Csrc <$> defFunction
 
 
 -- | defVariable

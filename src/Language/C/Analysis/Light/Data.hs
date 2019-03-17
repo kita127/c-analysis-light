@@ -1,7 +1,8 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TemplateHaskell       #-}
 module Language.C.Analysis.Light.Data
-( C(..)
+( Statement(..)
+, Ast(..)
 , PreState(..)
 , Cstate(..)
 , Proc(..)
@@ -19,17 +20,15 @@ data Condition = Condition
                  }
                  deriving (Eq, Show)
 
+data Ast = Ast [Statement]
 
-data C = Prepro
-         { contents :: PreState
-         , next     :: C
-         }
-       | Csrc
-         { statements :: Cstate
-         , next       :: C
-         }
-       | End
-    deriving (Eq, Show)
+data Statement = Preprocess
+                  { contents :: PreState
+                  }
+                | Csrc
+                  { statements :: Cstate
+                  }
+             deriving (Eq, Show)
 
 data PreState = Include
                 { prepro :: [Condition]
@@ -96,7 +95,8 @@ data Exp = PreUnary
 
 -- TemplateHaskell
 deriveJSON defaultOptions ''Condition
-deriveJSON defaultOptions ''C
+deriveJSON defaultOptions ''Ast
+deriveJSON defaultOptions ''Statement
 deriveJSON defaultOptions ''PreState
 deriveJSON defaultOptions ''Cstate
 deriveJSON defaultOptions ''Proc

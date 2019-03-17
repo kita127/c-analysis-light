@@ -105,16 +105,28 @@ testInclude = TestList
 testDefine :: Test
 testDefine = TestList
   [ "testDefine normal 1" ~:
-        (exRes $ stParse [] preprocess "#define    HOGE    VAR      \n" `feed` "") ~?= Right
+        (exRes $ stParse [] preprocess "#define CONDITION       HOGE\n" `feed` "") ~?= Right
             D.Preprocess {
               D.contents = D.Define {
                 D.prepro = []
-              , D.name = "HOGE"
-              , D.value = D.Identifire {
-                  D.name = "VAR"
-                }
+              , D.name = "CONDITION"
+              , D.value = "HOGE"
               }
             }
+
+  , "testDefine normal 2" ~:
+        (exRes $ stParse [] preprocess "    #define CONDITION       HOGE\n" `feed` "") ~?= Right
+            D.Preprocess {
+              D.contents = D.Define {
+                D.prepro = []
+              , D.name = "CONDITION"
+              , D.value = "HOGE"
+              }
+            }
+
+
+  , "testDefine error less CR" ~:
+        (exRes $ stParse [] preprocess "#define    HOGE    VAR" `feed` "") ~?= Left "\"\" : not enough input"
 
   ]
 

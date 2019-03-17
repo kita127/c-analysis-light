@@ -65,7 +65,17 @@ include =  D.Include <$> get <* token (lift $ string "#include") <*> file <* til
 -- | define
 --
 define :: SParser D.PreState
-define = D.Define <$> get <* (lift $ string "#define") <*> identifire <*> expr
+define = D.Define <$> get <* p <*> identifire <*> text
+    where
+        p = lift $ skipSpace *> string "#define"
+
+--  text
+--
+text :: SParser T.Text
+text = end <|> T.cons <$> fetch <*> text
+    where
+        end = lift (char '\n' *> pure "")
+        fetch = lift anyChar
 
 -- | file
 --

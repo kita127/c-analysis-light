@@ -4,7 +4,6 @@ module Language.C.Analysis.Light.Data
 ( Statement(..)
 , Ast(..)
 , PreState(..)
-, Cstate(..)
 , Proc(..)
 , Condition(..)
 , Exp(..)
@@ -22,13 +21,26 @@ data Condition = Condition
 
 data Ast = Ast [Statement]
 
+-- TODO:
+-- typ -> type にしたい
+--
 data Statement = Preprocess
-                  { contents :: PreState
-                  }
-                | Csrc
-                  { statements :: Cstate
-                  }
-             deriving (Eq, Show)
+                 { contents :: PreState
+                 }
+               | Var
+                 { prepro  :: [Condition]
+                 , typ     :: [T.Text]
+                 , name    :: T.Text
+                 , initVal :: Maybe Exp
+                 }
+               | Func
+                 { prepro :: [Condition]
+                 , return :: [T.Text]
+                 , name   :: T.Text
+                 , args   :: [Statement]
+                 , procs  :: [Proc]
+                 }
+                deriving (Eq, Show)
 
 data PreState = Include
                 { prepro :: [Condition]
@@ -36,23 +48,6 @@ data PreState = Include
                 }
               deriving (Eq, Show)
 
--- TODO:
--- typ -> type にしたい
---
-data Cstate = Var
-              { prepro  :: [Condition]
-              , typ     :: [T.Text]
-              , name    :: T.Text
-              , initVal :: Maybe Exp
-              }
-            | Func
-              { prepro :: [Condition]
-              , return :: [T.Text]
-              , name   :: T.Text
-              , args   :: [Cstate]
-              , procs  :: [Proc]
-              }
-            deriving (Eq, Show)
 
 -- TODO:
 -- Proc -> State とかにしたい
@@ -63,7 +58,7 @@ data Proc = Return
             }
           | LVar
             { prepro :: [Condition]
-            , var    :: Cstate
+            , var    :: Statement
             }
           | ExpState
             { prepro   :: [Condition]
@@ -98,7 +93,6 @@ deriveJSON defaultOptions ''Condition
 deriveJSON defaultOptions ''Ast
 deriveJSON defaultOptions ''Statement
 deriveJSON defaultOptions ''PreState
-deriveJSON defaultOptions ''Cstate
 deriveJSON defaultOptions ''Proc
 deriveJSON defaultOptions ''Exp
 

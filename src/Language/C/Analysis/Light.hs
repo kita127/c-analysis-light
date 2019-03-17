@@ -55,6 +55,11 @@ program = D.Ast <$> many' cLang
 cLang :: SParser D.Statement
 cLang = preprocess <|> statement
 
+-- | statement
+--
+statement :: SParser D.Statement
+statement = defVariable <|>  defFunction
+
 -- | preprocess
 --
 preprocess :: SParser D.Statement
@@ -112,17 +117,11 @@ condEnd = token $ lift $ string "#endif" *> pure ()
 
 
 
--- | statement
---
-statement :: SParser D.Statement
-statement =
-        D.Csrc <$> defVariable
-    <|> D.Csrc <$> defFunction
 
 
 -- | defVariable
 --
-defVariable :: SParser D.Cstate
+defVariable :: SParser D.Statement
 defVariable = update $ do
     (name, types) <- typeAndID
     v <- initValue
@@ -163,7 +162,7 @@ initValue = Just <$> p <|> pure Nothing
 
 -- | defFunction
 --
-defFunction :: SParser D.Cstate
+defFunction :: SParser D.Statement
 defFunction = do
     (name, ret) <- typeAndID
     args <- parens arguments
@@ -174,10 +173,10 @@ defFunction = do
 
 -- | arguments
 --
-arguments :: SParser [D.Cstate]
+arguments :: SParser [D.Statement]
 arguments = void <|> justArgs
     where
-        void :: SParser [D.Cstate]
+        void :: SParser [D.Statement]
         void = do
             token $ lift $ string "void"
             s <- get
@@ -185,7 +184,7 @@ arguments = void <|> justArgs
 
 -- | justArgs
 --
-justArgs :: SParser [D.Cstate]
+justArgs :: SParser [D.Statement]
 justArgs = (`sepBy1` comma) $ do
     (name, types) <- typeAndID
     s <- get

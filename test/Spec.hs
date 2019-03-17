@@ -27,6 +27,7 @@ main = do
       , testDefVariable
       , testDefFunction
       , testInclude
+      , testDefine
       , testExpr
       --, testArguments
 
@@ -95,6 +96,24 @@ testInclude = TestList
             }
   , "testInclude error 1" ~:
         (exRes $ stParse [] include "#include    <stdio.h>" `feed` "") ~?= Left "\"\" : not enough input"
+  ]
+
+-- | testDefine
+--
+testDefine :: Test
+testDefine = TestList
+  [ "testDefine normal 1" ~:
+        (exRes $ stParse [] preprocess "#define    HOGE    VAR      \n" `feed` "") ~?= Right
+            D.Preprocess {
+              D.contents = D.Define {
+                D.prepro = []
+              , D.name = "HOGE"
+              , D.value = D.Identifire {
+                  D.name = "VAR"
+                }
+              }
+            }
+
   ]
 
 

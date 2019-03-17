@@ -46,6 +46,11 @@ data PreState = Include
                 { prepro :: [Condition]
                 , file   :: T.Text
                 }
+              | Define
+                { prepro :: [Condition]
+                , name   :: T.Text
+                , value  :: Exp
+                }
               deriving (Eq, Show)
 
 

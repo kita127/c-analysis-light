@@ -7,6 +7,7 @@ module Language.C.Analysis.Light
 , defVariable
 , defFunction
 , identifire
+, preprocess
 , include
 , expr
 ) where
@@ -54,13 +55,18 @@ statement = defVariable <|>  defFunction
 -- | preprocess
 --
 preprocess :: SParser D.Statement
-preprocess = D.Preprocess <$> include
+preprocess = D.Preprocess <$> (include <|> define)
 
 
 -- | include
 --
 include :: SParser D.PreState
 include =  D.Include <$> get <* token (lift $ string "#include") <*> file <* tillEndOfLine
+
+-- | define
+--
+define :: SParser D.PreState
+define = D.Define <$> get <* (lift $ string "#define") <*> identifire <*> expr
 
 -- | file
 --

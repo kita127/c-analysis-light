@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+#define CONDITION       HOGE
+#define HOGE        1
+#define FUGA        2
+
 
 int main( void )
 {

@@ -8,8 +8,8 @@ module Language.C.Analysis.Light
 , defVariable
 , defFunction
 , identifire
-, value
 , include
+, expr
 --, preprocess
 --, preproIfStart
 ) where
@@ -18,6 +18,7 @@ import           Control.Applicative
 import           Control.Monad.Trans.Class      (lift)
 import           Control.Monad.Trans.State      (StateT, evalStateT, get,
                                                  modify)
+import           Data.Attoparsec.Expr
 import           Data.Attoparsec.Text           hiding (take)
 import           Data.Functor                   (($>))
 import           Data.List                      (intercalate)
@@ -44,9 +45,10 @@ analyze s = case parse (p <* endOfInput) s `feed` "" of
 
 -- | cLang
 --
+-- TODO: AST をトップとする
+--
 cLang :: SParser D.C
 cLang = preprocess <|> statement <|> pure D.End
---cLang pre = preproIfStart <|> preprocess pre <|> statement pre <|> preproIfEnd <|> pure D.End
 
 -- | preprocess
 --
@@ -72,36 +74,6 @@ tillEndOfLine = lift $ takeTill isEndOfLine *> endOfLine
 
 
 
-
--- | token
---
-token :: SParser a -> SParser a
-token p = spaceOrComment *> p <* spaceOrComment
-
--- | spaceOrComment
---
-spaceOrComment :: SParser ()
-spaceOrComment = skipMany $
-    lift space $> () <|> comment1 <|> comment2
-
--- | comment1
---
-comment1 :: SParser ()
-comment1 = do
-    lift $ string "/*"
-    lift consume
-
-    where
-        consume = string "*/" $> () <|> anyChar *> consume
-
--- | comment2
---
--- // ~~~~~~~~~~~~~
---
-comment2 :: SParser ()
-comment2 = lift $ string "//" *> takeTill isEndOfLine *> endOfLine
-
-
 -- | update
 --
 -- TODO:
@@ -125,10 +97,8 @@ update p = do
 condStart :: SParser D.Condition
 condStart = do
     c <- token $ lift $ string "#if"
-    l <- identifire
-    o <- token $ lift $ string "=="
-    r <- value
-    return $ D.Condition c l o r
+    e <- expr
+    return $ D.Condition c e
 
 -- | condEnd
 --
@@ -166,19 +136,7 @@ typeAndID = do
     return (last ids, init ids)
 
 
--- | identifire
---
-identifire :: SParser T.Text
-identifire = token $ do
-    head' <- lift $ letter <|> char '_'
-    tail' <- lift $ many1 idLetter
-    return $ T.pack $ head' : tail'
 
-
--- | idLetter
---
-idLetter :: Parser Char
-idLetter = letter <|> digit <|> char '_'
 
 
 
@@ -191,33 +149,11 @@ pointer = token $ lift $ string "*"
 
 -- | initValue
 --
-initValue :: SParser (Maybe T.Text)
+initValue :: SParser (Maybe D.Exp)
 initValue = Just <$> p <|> pure Nothing
     where
-        p :: SParser T.Text
-        p = equal *> value
-
-
--- | value
---
-value :: SParser T.Text
-value = token $ hex <|> lift (T.pack <$> many1 digit) <|> addressVal <|> identifire
-    where
-        addressVal = do
-            lift $ char '&'
-            n <- identifire
-            return $ '&' `T.cons` n
-
--- | hex
---
-hex :: SParser T.Text
-hex = do
-    lift $ string "0x"
-    n <- p
-    return $ T.pack ('0':'x':n)
-    where
-        p :: SParser String
-        p = lift $ many1 $ satisfy $ inClass "a-fA-F0-9"
+        p :: SParser D.Exp
+        p = equal *> expr
 
 
 -- | defFunction
@@ -225,9 +161,7 @@ hex = do
 defFunction :: SParser D.Cstate
 defFunction = do
     (name, ret) <- typeAndID
-    sParen
-    args <- arguments
-    eParen
+    args <- parens arguments
     p <- block
     s <- get
     return $ D.Func s ret name args p
@@ -257,117 +191,176 @@ justArgs = (`sepBy1` comma) $ do
 -- | block
 --
 block :: SParser [D.Proc]
-block = do
-    sBracket
-    ps <- many' $ process
-    eBracket
-    return ps
+block = brackets $ many' process
 
 
 -- | process
 --
 process :: SParser D.Proc
-process = funcReturn <|> callFunc <|> localVariable <|> assigne <|> aloneExp
+process = funcRet <|> defLVariable <|> exprState
+    where
+        defLVariable = D.LVar <$> get <*> defVariable
+        funcRet = D.Return <$> get <* retKey <*> expr <* semicolon
 
 
--- | funcReturn
+-- | exprState
 --
-funcReturn :: SParser D.Proc
-funcReturn = update $ D.Return <$> get <* returnKey <* sParen <*> value <* eParen <* semicolon
+exprState :: SParser D.Proc
+exprState = update $ D.ExpState <$> get <*> expr <* semicolon
 
--- | callFunc
---
-callFunc :: SParser D.Proc
-callFunc = update $ do
-    f <- identifire
-    sParen
-    a <- expression `sepBy` comma
-    eParen
-    semicolon
-    s <- get
-    return $ D.Call s f a
 
--- | strLiteral
---
-strLiteral :: SParser D.Exp
-strLiteral = token $ lift $ do
-    char '"'
-    s <- takeTill (== '"')
-    char '"'
-    return $ D.StrLiteral s
-
--- | localVariable
---
-localVariable :: SParser D.Proc
-localVariable = update $ D.LVar <$> get <*> defVariable
-
--- | assigne
---
-assigne :: SParser D.Proc
-assigne = update $ D.Assigne <$> get <*> identifire <* equal <*> expression <* semicolon
-
--- | aloneExp
---
-aloneExp :: SParser D.Proc
-aloneExp = update $ D.Exprssions <$> get <*> expression <* semicolon
-
+-- ----------------------------------------------------------------------------------
 -- | expression
---
-expression :: SParser D.Exp
-expression = binary <|> expressionId <|> strLiteral <|> literal
+-- ----------------------------------------------------------------------------------
 
--- | binary
+-- | expr
 --
-binary :: SParser D.Exp
-binary = D.Binary <$> literal <*> operation <*> literal
+expr :: SParser D.Exp
+expr = lift expr'
 
--- | expressionId
+expr' :: Parser D.Exp
+expr' = buildExpressionParser table term <?> "expression"
+
+-- TODO:関数コールもテーブルに含めたい
 --
-expressionId :: SParser D.Exp
-expressionId = D.Identifire <$> identifire
+term :: Parser D.Exp
+term =  parens' expr' <|> call' <|> id' <|> literal' <|> strLiteral' <?> "simple expression"
+    where
+        id' = D.Identifire <$> identifire'
+
+table :: [[Operator T.Text D.Exp]]
+table = [ [prefix  "&"  (D.PreUnary "&")]                                                         -- 2
+        , [binary' "*"  (D.Binary "*" ) AssocLeft, binary' "/" (D.Binary "/") AssocLeft]          -- 3  : Left
+        , [binary' "+"  (D.Binary "+" ) AssocLeft, binary' "-" (D.Binary "-") AssocLeft]          -- 4  : Left
+        , [binary' "==" (D.Binary "==") AssocRight]                                               -- 7  : Left
+        , [binary' "="  (D.Binary "=" ) AssocRight]                                               -- 14 : Right
+        ]
+--table = [ [prefix "-" negate, prefix "+" id ]
+--        , [postfix "++" (+1)]
+--        , [binary' "*" (*) AssocLeft, binary' "/" (div) AssocLeft ]
+--        , [binary' "+" (+) AssocLeft, binary' "-" (-)   AssocLeft ]
+--        ]
+
+binary' :: T.Text -> (D.Exp -> D.Exp -> D.Exp) -> Assoc -> Operator T.Text D.Exp
+binary' name fun assoc = Infix (do{ string name; return fun }) assoc
+prefix  name fun       = Prefix (do{ string name; return fun })
+--postfix name fun       = Postfix (do{ string name; return fun })
+
+-- | call'
+call' :: Parser D.Exp
+call' = do
+    f <- identifire'
+    as <- parens' $ expr' `sepBy` comma'
+    return $ D.Call f as
+
 
 
 -- | literal
 --
+-- TODO:トークン化する
+--
 literal :: SParser D.Exp
-literal = D.Literal <$> value
+literal = lift literal'
 
+literal' :: Parser D.Exp
+literal' = D.Literal <$> (hex' <|> integer')
 
--- | operation
+-- | strLiteral
 --
-operation :: SParser D.Operation
-operation = (token $ lift $ char '+') $> D.Add
+strLiteral' :: Parser D.Exp
+strLiteral' = token' $ D.StrLiteral <$ char '"' <*> takeTill (== '"') <* char '"'
 
 
--- | returnKey
+-- | identifire
 --
-returnKey :: SParser ()
-returnKey = token $ lift $ string "return" $> ()
+identifire :: SParser T.Text
+identifire = lift identifire'
 
--- | sParen
---
-sParen :: SParser ()
-sParen = token $ lift $ char '(' $> ()
+identifire' :: Parser T.Text
+identifire' = token' $ do
+    head' <- letter <|> char '_'
+    tail' <- many1 idLetter'
+    return $ T.pack $ head' : tail'
 
--- | eParen
+-- | idLetter'
 --
-eParen :: SParser ()
-eParen = token $ lift $ char ')' $> ()
+idLetter' :: Parser Char
+idLetter' = letter <|> digit <|> char '_'
 
--- | sBracket
---
-sBracket :: SParser ()
-sBracket = token $ lift $ char '{' $> ()
 
--- | eBracket
+-- | integer
 --
-eBracket :: SParser ()
-eBracket = token $ lift $ char '}' $> ()
+integer' :: Parser T.Text
+integer' = token' $ T.pack <$> many1 digit
+
+-- | hex
+--
+hex :: SParser T.Text
+hex = lift hex'
+
+hex' :: Parser T.Text
+hex' = T.append <$> string "0x" <*> p
+    where
+        p = fmap T.pack $ many1 $ satisfy $ inClass "a-fA-F0-9"
+
+-- ----------------------------------------------------------------------------------
+-- | keywords
+-- ----------------------------------------------------------------------------------
+-- | parens
+--
+parens :: SParser a -> SParser a
+parens p = sParen *> p <* eParen
+    where
+        sParen = token $ lift $ char '(' $> ()
+        eParen = token $ lift $ char ')' $> ()
+
+parens' :: Parser a -> Parser a
+parens' p = sParen' *> p <* eParen'
+    where
+        sParen' = token' $ char '(' $> ()
+        eParen' = token' $ char ')' $> ()
+
+
+-- | retKey
+--
+retKey :: SParser ()
+retKey = token $ lift $ string "return" $> ()
+
+
+-- | comma
+--
+comma :: SParser Char
+comma = lift comma'
+
+-- | comma'
+--
+comma' :: Parser Char
+comma' = char ','
+
+-- | brackets
+--
+brackets :: SParser a -> SParser a
+brackets p = sBracket *> p <* eBracket
+    where
+        sBracket = token $ lift $ char '{' $> ()
+        eBracket = token $ lift $ char '}' $> ()
+
+
+brackets' :: Parser a -> Parser a
+brackets' p = sBracket' *> p <* eBracket'
+    where
+        sBracket' = token' $ char '{' $> ()
+        eBracket' = token' $ char '}' $> ()
 
 -- | equal
 --
 equal :: SParser ()
-equal = token $ lift $ char '=' $> ()
+equal = lift equal'
+
+-- | equal'
+--
+equal' :: Parser ()
+equal' = token' $ char '=' $> ()
 
 -- | semicolon
 --
@@ -375,11 +368,51 @@ semicolon :: SParser ()
 semicolon = token $ lift $ char ';' $> ()
 
 
--- | comma
---
-comma :: SParser Char
-comma = lift $ char ','
 
+-- ----------------------------------------------------------------------------------
+-- | lexer
+-- ----------------------------------------------------------------------------------
+
+-- | token
+--
+-- State + Parser 用のトークン関数
+--
+token :: SParser a -> SParser a
+token p = lift spaceOrComment *> p <* lift spaceOrComment
+
+-- | token'
+--
+-- Parser 単体用のトークン関数
+--
+token' :: Parser a -> Parser a
+token' p = spaceOrComment *> p <* spaceOrComment
+
+-- | spaceOrComment
+--
+spaceOrComment :: Parser ()
+spaceOrComment = skipMany $
+    space $> () <|> comment1 <|> comment2
+
+-- | comment1
+--
+comment1 :: Parser ()
+comment1 = do
+    string "/*"
+    consume
+    where
+        consume = string "*/" $> () <|> anyChar *> consume
+
+-- | comment2
+--
+-- // ~~~~~~~~~~~~~
+--
+comment2 :: Parser ()
+comment2 = string "//" *> takeTill isEndOfLine *> endOfLine
+
+
+-- ----------------------------------------------------------------------------------
+-- | 補助関数
+-- ----------------------------------------------------------------------------------
 
 -- | liftAp
 --
@@ -390,45 +423,5 @@ liftAp = liftA2 T.append
 
 
 
----- | preprocess
-----
---preprocess :: [T.Text] -> Parser D.C
---preprocess pre = D.Prepro <$> pure pre <*> include <*> cLang pre
---
---
---
---
 
 
----- | preproIfStart
-----
---preproIfStart :: Parser D.C
---preproIfStart = do
---    skipMany space
---    s <- p
---    d <- statement $ pure s
---    return d
---    where
---        p = preIfState
---
----- | preIfState
-----
---preIfState :: Parser T.Text
---preIfState = do
---    preCond <- token $ string "#if"
---    left    <- token identifire
---    ex      <- token $ string "=="
---    right   <- value
---    tillEndOfLine
---    return $ T.intercalate " " [preCond, left, ex, right]
---
----- | preproIfEnd
-----
---preproIfEnd :: Parser D.C
---preproIfEnd = do
---    token $ string "#endif"
---    cLang mempty
---
---
---
---

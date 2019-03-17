@@ -23,11 +23,11 @@ main = do
       [ testSample
       , testToken
       , testComment
-      , testValue
       , testIdentifire
       , testDefVariable
       , testDefFunction
       , testInclude
+      , testExpr
       --, testArguments
 
       --, testPreprocess
@@ -62,7 +62,11 @@ testComment = TestList
               D.prepro = []
             , D.typ = ["MyType"]
             , D.name = "my_var"
-            , D.initVal = Just "tmp_v"
+            , D.initVal = Just (
+                D.Identifire {
+                  D.name = "tmp_v"
+                }
+              )
             }
   , "testComment normal 2" ~:
         (exRes $ stParse [] defVariable "    // comment\nMyType my_var = tmp_v;" `feed` "") ~?= Right
@@ -70,7 +74,11 @@ testComment = TestList
               D.prepro = []
             , D.typ = ["MyType"]
             , D.name = "my_var"
-            , D.initVal = Just "tmp_v"
+            , D.initVal = Just (
+                D.Identifire {
+                  D.name = "tmp_v"
+                }
+              )
             }
   ]
 
@@ -90,19 +98,6 @@ testInclude = TestList
   ]
 
 
-testValue :: Test
-testValue = TestList
-  [ "testValue normal 1" ~:
-        (exRes $ stParse [] value "VALUE" `feed` "") ~?= Right "VALUE"
-  , "testValue normal 2" ~:
-        (exRes $ stParse [] value "234" `feed` "") ~?= Right "234"
-  , "testValue hex 1" ~:
-        (exRes $ stParse [] value "0xA5" `feed` "") ~?= Right "0xA5"
-  , "testValue oct 1" ~:
-        (exRes $ stParse [] value "036" `feed` "") ~?= Right "036"
-  , "testValue address 1" ~:
-        (exRes $ stParse [] value "&hoge" `feed` "") ~?= Right "&hoge"
-  ]
 
 
 
@@ -118,67 +113,11 @@ testIdentifire = TestList
   ]
 
 
-
--- | testDefFunction input
+-- | testDefFunction
 --
--- | 1
---
-testDefFunction_in1 = [r|
-void hoge_func( void )
-{
-}
-|]
-
--- | 2
---
-testDefFunction_in2 = [r|
-void hoge_func__1(    int arg1   )
-{
-
-}
-|]
-
-
-
-
-
-
 testDefFunction :: Test
 testDefFunction = TestList
   [ "testDefFunction normal 1" ~:
-        (exRes $ stParse [] defFunction testDefFunction_in1 `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["void"]
-            , D.name   = "hoge_func"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = []
-            }
-  , "testDefFunction normal 2" ~:
-        (exRes $ stParse [] defFunction testDefFunction_in2 `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["void"]
-            , D.name   = "hoge_func__1"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["int"]
-                , D.name = "arg1"
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = []
-            }
-
-  , "testDefFunction normal 3" ~:
         (exRes $ stParse [] defFunction [r|
 static int * mul_ret_arg_f ( char hoge, int *p_fuga )
 {
@@ -205,19 +144,17 @@ static int * mul_ret_arg_f ( char hoge, int *p_fuga )
             , D.procs = []
             }
 
-  , "testDefFunction call 1" ~:
+  , "testDefFunction expression expState 1" ~:
         (exRes $ stParse [] defFunction [r|
-int main( void )
+int func( void )
 {
-    printf("Hellow World\n");
-
-    return (0);
+    1 + 2;
 }
 |] `feed` "") ~?= Right
             D.Func {
               D.prepro = []
             , D.return = ["int"]
-            , D.name   = "main"
+            , D.name   = "func"
             , D.args   = [
                 D.Var {
                   D.prepro = []
@@ -227,67 +164,31 @@ int main( void )
                 }
               ]
             , D.procs = [
-                D.Call {
+                D.ExpState {
                   D.prepro = []
-                , D.name = "printf"
-                , D.args = [
-                    D.StrLiteral {D.str = "Hellow World\\n"}
-                  ]
-                }
-              , D.Return {
-                  D.prepro = []
-                , D.value = "0"
-                }
-              ]
-            }
-
-  , "testDefFunction call 2" ~:
-        (exRes $ stParse [] defFunction [r|
-int main( void )
-{
-    printf("local_var ...%d\n", local_var);
-
-    return (0);
-}
-|] `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["int"]
-            , D.name   = "main"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = [
-                D.Call {
-                  D.prepro = []
-                , D.name = "printf"
-                , D.args = [
-                    D.StrLiteral {D.str = "local_var ...%d\\n"}
-                  , D.Identifire {D.id = "local_var"}
-                  ]
-                }
-              , D.Return {
-                  D.prepro = []
-                , D.value = "0"
+                , D.contents = D.Binary {
+                    D.op = "+"
+                  , D.left = D.Literal {
+                      D.value = "1"
+                    }
+                  , D.right = D.Literal {
+                      D.value = "2"
+                    }
+                  }
                 }
               ]
             }
 
   , "testDefFunction local var 1" ~:
         (exRes $ stParse [] defFunction [r|
-void func( void )
+int func( void )
 {
-    int local_var;
+    char local_var = VALUE;
 }
 |] `feed` "") ~?= Right
             D.Func {
               D.prepro = []
-            , D.return = ["void"]
+            , D.return = ["int"]
             , D.name   = "func"
             , D.args   = [
                 D.Var {
@@ -302,24 +203,28 @@ void func( void )
                   D.prepro = []
                 , D.var = D.Var {
                     D.prepro = []
-                  , D.typ = ["int"]
+                  , D.typ = ["char"]
                   , D.name = "local_var"
-                  , D.initVal = Nothing
+                  , D.initVal = Just (
+                      D.Identifire {
+                        D.name = "VALUE"
+                      }
+                    )
                   }
                 }
               ]
             }
 
-  , "testDefFunction assigne 1" ~:
+  , "testDefFunction return 1" ~:
         (exRes $ stParse [] defFunction [r|
-void func( void )
+int func( void )
 {
-    local_var = 2;
+    return (100 + 51);
 }
 |] `feed` "") ~?= Right
             D.Func {
               D.prepro = []
-            , D.return = ["void"]
+            , D.return = ["int"]
             , D.name   = "func"
             , D.args   = [
                 D.Var {
@@ -330,89 +235,24 @@ void func( void )
                 }
               ]
             , D.procs = [
-                D.Assigne{
+                D.Return {
                   D.prepro = []
-                , D.left = "local_var"
-                , D.right = D.Literal {value = "2"}
-                }
-              ]
-            }
-  , "testDefFunction expression 1" ~:
-        (exRes $ stParse [] defFunction [r|
-void func( void )
-{
-    2 + 1;
-}
-|] `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["void"]
-            , D.name   = "func"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = [
-                D.Exprssions{
-                  D.prepro = []
-                , D.contents =
-                    D.Binary {
-                      D.op = D.Add
-                    , D.left = D.Literal {
-                        D.value = "2"
-                      }
-                    , D.right = D.Literal {
-                        D.value = "1"
-                      }
+                , D.operand = D.Binary {
+                    D.op = "+"
+                  , D.left = D.Literal {
+                      D.value = "100"
                     }
-                }
-              ]
-            }
-  , "testDefFunction expression 2" ~:
-        (exRes $ stParse [] defFunction [r|
-void func( void )
-{
-    local_val = 2 + 1;
-}
-|] `feed` "") ~?= Right
-            D.Func {
-              D.prepro = []
-            , D.return = ["void"]
-            , D.name   = "func"
-            , D.args   = [
-                D.Var {
-                  D.prepro = []
-                , D.typ = ["void"]
-                , D.name = ""
-                , D.initVal = Nothing
-                }
-              ]
-            , D.procs = [
-                D.Assigne {
-                  D.prepro = []
-                , left = "local_val"
-                , right = D.Binary {
-                    D.left = D.Literal {value = "2"}
-                  , D.op   = D.Add
-                  , D.right = D.Literal {value = "1"}
+                  , D.right = D.Literal {
+                      D.value = "51"
+                    }
                   }
                 }
               ]
             }
+
+
   ]
 
-
-testDefVariable_in1 = [r|
-#if HOGE_SW == 1
-
-char condition_variable;
-
-#endif    /* HOGE_SW */
-|]
 
 
 testDefVariable :: Test
@@ -448,7 +288,11 @@ testDefVariable = TestList
               D.prepro = []
             , D.typ = ["Hoge"]
             , D.name = "yyy_abc"
-            , D.initVal = Just "100"
+            , D.initVal = Just (
+                D.Literal {
+                  D.value = "100"
+                }
+              )
             }
   , "testDefVariable initial value 2" ~:
         (exRes $ stParse [] defVariable "Hoge     yyy_abc            =    100       ;" `feed` "") ~?= Right
@@ -456,7 +300,11 @@ testDefVariable = TestList
               D.prepro = []
             , D.typ = ["Hoge"]
             , D.name = "yyy_abc"
-            , D.initVal = Just "100"
+            , D.initVal = Just (
+                D.Literal {
+                  D.value = "100"
+                }
+              )
             }
   , "testDefVariable initial value 3" ~:
         (exRes $ stParse [] defVariable "char    foobar_xyz   =  VALUE;" `feed` "") ~?= Right
@@ -464,7 +312,11 @@ testDefVariable = TestList
               D.prepro = []
             , D.typ = ["char"]
             , D.name = "foobar_xyz"
-            , D.initVal = Just "VALUE"
+            , D.initVal = Just (
+                D.Identifire {
+                  D.name = "VALUE"
+                }
+              )
             }
   , "testDefVariable initial value 4" ~:
         (exRes $ stParse [] defVariable "  static char    foobar_xyz   =  0xFFFF  ;" `feed` "") ~?= Right
@@ -472,7 +324,11 @@ testDefVariable = TestList
               D.prepro = []
             , D.typ = ["static", "char"]
             , D.name = "foobar_xyz"
-            , D.initVal = Just "0xFFFF"
+            , D.initVal = Just (
+                D.Literal {
+                  D.value = "0xFFFF"
+                }
+              )
             }
 
   , "testDefVariable pointer 1" ~:
@@ -481,7 +337,14 @@ testDefVariable = TestList
               D.prepro = []
             , D.typ = ["signed", "int", "*"]
             , D.name = "p_val_axz"
-            , D.initVal = Just "&hoge"
+            , D.initVal = Just (
+                D.PreUnary {
+                  D.op = "&"
+                , D.operand = D.Identifire {
+                    D.name = "hoge"
+                  }
+                }
+              )
             }
   , "testDefVariable pointer 2" ~:
         (exRes $ stParse [] defVariable "  signed  * int    **p_val_00d4   =  &hoge  ;" `feed` "") ~?= Right
@@ -489,25 +352,232 @@ testDefVariable = TestList
               D.prepro = []
             , D.typ = ["signed", "*", "int", "*", "*"]
             , D.name = "p_val_00d4"
-            , D.initVal = Just "&hoge"
+            , D.initVal = Just (
+                D.PreUnary {
+                  D.op = "&"
+                , D.operand = D.Identifire {
+                    D.name = "hoge"
+                  }
+                }
+              )
             }
+
   , "testDefVariable prepro 1" ~:
-        (exRes $ stParse [] defVariable testDefVariable_in1 `feed` "") ~?= Right
+        (exRes $ stParse [] defVariable [r|
+#if HOGE_SW == 1
+
+char condition_variable;
+
+#endif    /* HOGE_SW */
+|] `feed` "") ~?= Right
             D.Var {
               D.prepro = [
                 D.Condition {
                   D.command = "#if"
-                , D.left = "HOGE_SW"
-                , D.op = "=="
-                , D.right = "1"
+                , D.expr = D.Binary {
+                    D.op = "=="
+                  , D.left = D.Identifire {
+                      D.name = "HOGE_SW"
+                    }
+                  , D.right = D.Literal {
+                      D.value = "1"
+                    }
+                  }
                 }
-            ]
+              ]
             , D.typ = ["char"]
             , D.name = "condition_variable"
             , D.initVal = Nothing
             }
   ]
 
+-- | testExpr
+--
+testExpr :: Test
+testExpr = TestList
+  [ "testExpr literal 1" ~:
+        (exRes $ stParse [] expr "123" `feed` "") ~?= Right
+            D.Literal {
+              D.value = "123"
+            }
+
+  , "testExpr literal + space 1" ~:
+        (exRes $ stParse [] expr "   123    " `feed` "") ~?= Right
+            D.Literal {
+              D.value = "123"
+            }
+
+  , "testExpr str literal 1" ~:
+        (exRes $ stParse [] expr [r|"Hello world\n"|] `feed` "") ~?= Right
+            D.StrLiteral {
+              D.value = "Hello world\\n"
+            }
+
+  , "testExpr ampersand 1" ~:
+        (exRes $ stParse [] expr "&hoge" `feed` "") ~?= Right
+            D.PreUnary {
+              D.op = "&"
+            , D.operand = D.Identifire {
+                D.name = "hoge"
+              }
+            }
+
+  , "testExpr addition 1" ~:
+        (exRes $ stParse [] expr "1 + 2" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Literal {
+                D.value = "1"
+              }
+            , D.right = D.Literal {
+                D.value = "2"
+              }
+            }
+
+  , "testExpr addition 1" ~:
+        (exRes $ stParse [] expr "1 + 2 + 3" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Binary {
+                D.op = "+"
+              , D.left = D.Literal {
+                  D.value = "1"
+                }
+              , D.right = D.Literal {
+                  D.value = "2"
+                }
+              }
+            , D.right = D.Literal {
+                D.value = "3"
+              }
+            }
+
+  , "testExpr addition + parens 1" ~:
+        (exRes $ stParse [] expr "1 + (2 + 3)" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Literal {
+                D.value = "1"
+              }
+            , D.right = D.Binary {
+                D.op = "+"
+              , D.left = D.Literal {
+                  D.value = "2"
+                }
+              , D.right = D.Literal {
+                  D.value = "3"
+                }
+              }
+            }
+
+
+  , "testExpr  identifire 1" ~:
+        (exRes $ stParse [] expr "hoge_var" `feed` "") ~?= Right
+            D.Identifire {
+              D.name = "hoge_var"
+            }
+
+  , "testExpr  call 1" ~:
+        (exRes $ stParse [] expr "func_xxx(abc, 1 + 2)" `feed` "") ~?= Right
+            D.Call {
+              D.func = "func_xxx"
+            , D.args = [
+                D.Identifire {
+                  D.name = "abc"
+                }
+              , D.Binary {
+                  D.op = "+"
+                , D.left = D.Literal {
+                    D.value = "1"
+                  }
+                , D.right = D.Literal {
+                    D.value = "2"
+                  }
+                }
+              ]
+            }
+
+  , "testExpr  assigne 1" ~:
+        (exRes $ stParse [] expr "hoge = 99 - 5" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "="
+            , D.left = D.Identifire {
+                D.name = "hoge"
+              }
+            , D.right = D.Binary {
+                D.op = "-"
+              , D.left = D.Literal {
+                  D.value = "99"
+                }
+              , D.right = D.Literal {
+                  D.value = "5"
+                }
+              }
+            }
+
+  , "testExpr  multicalc 1" ~:
+        (exRes $ stParse [] expr "1 * 2 + 3 / (4 - 5)" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Binary {
+                D.op = "*"
+              , D.left = D.Literal {
+                  D.value = "1"
+                }
+              , D.right = D.Literal {
+                  D.value = "2"
+                }
+              }
+            , D.right = D.Binary {
+                D.op = "/"
+              , D.left = D.Literal {
+                  D.value = "3"
+                }
+              , D.right = D.Binary {
+                  D.op = "-"
+                , D.left = D.Literal {
+                    D.value = "4"
+                  }
+                , D.right = D.Literal {
+                    D.value = "5"
+                  }
+                }
+              }
+            }
+
+  , "testExpr  multicalc 2" ~:
+        (exRes $ stParse [] expr "hoge * 2 + fuga / (4 - 5)" `feed` "") ~?= Right
+            D.Binary {
+              D.op = "+"
+            , D.left = D.Binary {
+                D.op = "*"
+              , D.left = D.Identifire {
+                  D.name = "hoge"
+                }
+              , D.right = D.Literal {
+                  D.value = "2"
+                }
+              }
+            , D.right = D.Binary {
+                D.op = "/"
+              , D.left = D.Identifire {
+                  D.name = "fuga"
+                }
+              , D.right = D.Binary {
+                  D.op = "-"
+                , D.left = D.Literal {
+                    D.value = "4"
+                  }
+                , D.right = D.Literal {
+                    D.value = "5"
+                  }
+                }
+              }
+            }
+
+
+
+  ]
 
 
 

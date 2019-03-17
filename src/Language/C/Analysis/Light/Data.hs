@@ -7,7 +7,6 @@ module Language.C.Analysis.Light.Data
 , Proc(..)
 , Condition(..)
 , Exp(..)
-, Operation(..)
 ) where
 
 import           Data.Aeson.TH
@@ -16,9 +15,7 @@ import qualified Data.Text            as T
 
 data Condition = Condition
                  { command :: T.Text
-                 , left    :: T.Text
-                 , op      :: T.Text
-                 , right   :: T.Text
+                 , expr    :: Exp
                  }
                  deriving (Eq, Show)
 
@@ -47,7 +44,7 @@ data Cstate = Var
               { prepro  :: [Condition]
               , typ     :: [T.Text]
               , name    :: T.Text
-              , initVal :: Maybe T.Text
+              , initVal :: Maybe Exp
               }
             | Func
               { prepro :: [Condition]
@@ -58,45 +55,44 @@ data Cstate = Var
               }
             deriving (Eq, Show)
 
-data Proc = Call
-            { prepro :: [Condition]
-            , name   :: T.Text
-            , args   :: [Exp]
-            }
-          | Return
-            { prepro :: [Condition]
-            , value  :: T.Text
+-- TODO:
+-- Proc -> State とかにしたい
+--
+data Proc = Return
+            { prepro  :: [Condition]
+            , operand :: Exp
             }
           | LVar
             { prepro :: [Condition]
             , var    :: Cstate
             }
-          | Assigne
-            { prepro :: [Condition]
-            , left   :: T.Text
-            , right  :: Exp
-            }
-          | Exprssions
+          | ExpState
             { prepro   :: [Condition]
             , contents :: Exp
             }
           deriving (Eq, Show)
 
-data Exp = Binary
-           { left  :: Exp
-           , op    :: Operation
+data Exp = PreUnary
+           { op      :: T.Text
+           , operand :: Exp
+           }
+         | Binary
+           { op    :: T.Text
+           , left  :: Exp
            , right :: Exp
            }
+         | Call
+           { func :: T.Text
+           , args :: [Exp]
+           }
          | Identifire
-           { id :: T.Text }
+           { name :: T.Text }
          | Literal
            { value :: T.Text }
          | StrLiteral
-           { str :: T.Text }
+           { value :: T.Text }
           deriving (Eq, Show)
 
-data Operation = Add | Sub
-          deriving (Eq, Show)
 
 -- TemplateHaskell
 deriveJSON defaultOptions ''Condition
@@ -105,5 +101,4 @@ deriveJSON defaultOptions ''PreState
 deriveJSON defaultOptions ''Cstate
 deriveJSON defaultOptions ''Proc
 deriveJSON defaultOptions ''Exp
-deriveJSON defaultOptions ''Operation
 

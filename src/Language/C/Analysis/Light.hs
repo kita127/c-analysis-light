@@ -8,7 +8,6 @@ module Language.C.Analysis.Light
 , defFunction
 , identifire
 , preprocess
-, include
 , expr
 ) where
 

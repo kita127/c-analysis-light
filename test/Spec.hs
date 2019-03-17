@@ -89,13 +89,15 @@ testComment = TestList
 testInclude :: Test
 testInclude = TestList
   [ "testInclude normal 1" ~:
-        (exRes $ stParse [] include "#include    <stdio.h>      \n" `feed` "") ~?= Right
-            D.Include {
-              D.prepro = []
-            , D.file = "<stdio.h>"
+        (exRes $ stParse [] preprocess "#include    <stdio.h>      \n" `feed` "") ~?= Right
+            D.Preprocess {
+              D.contents = D.Include {
+                D.prepro = []
+              , D.file = "<stdio.h>"
+              }
             }
   , "testInclude error 1" ~:
-        (exRes $ stParse [] include "#include    <stdio.h>" `feed` "") ~?= Left "\"\" : not enough input"
+        (exRes $ stParse [] preprocess "#include    <stdio.h>" `feed` "") ~?= Left "\"#include    <stdio.h>\" : string"
   ]
 
 -- | testDefine

@@ -4,14 +4,11 @@
 module Language.C.Analysis.Light
 ( analyze
 , token
---, statement
 , defVariable
 , defFunction
 , identifire
 , include
 , expr
---, preprocess
---, preproIfStart
 ) where
 
 import           Control.Applicative
@@ -46,14 +43,8 @@ analyze s = case parse (p <* endOfInput) s `feed` "" of
 -- | program
 --
 program :: SParser D.Ast
-program = D.Ast <$> many' cLang
+program = D.Ast <$> many' (preprocess <|> statement)
 
--- | cLang
---
--- TODO: AST をトップとする
---
-cLang :: SParser D.Statement
-cLang = preprocess <|> statement
 
 -- | statement
 --

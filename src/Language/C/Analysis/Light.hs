@@ -45,6 +45,8 @@ analyze s = case parse (p <* endOfInput) s `feed` "" of
 
 -- | cLang
 --
+-- TODO: AST をトップとする
+--
 cLang :: SParser D.C
 cLang = preprocess <|> statement <|> pure D.End
 

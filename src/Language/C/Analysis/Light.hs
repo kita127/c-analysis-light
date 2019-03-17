@@ -4,14 +4,11 @@
 module Language.C.Analysis.Light
 ( analyze
 , token
---, statement
 , defVariable
 , defFunction
 , identifire
 , include
 , expr
---, preprocess
---, preproIfStart
 ) where
 
 import           Control.Applicative
@@ -35,25 +32,29 @@ type TypeStr = T.Text
 
 -- | analyze
 --
-analyze :: T.Text -> Either String D.C
+analyze :: T.Text -> Either String D.Ast
 analyze s = case parse (p <* endOfInput) s `feed` "" of
     (Done _ r)    -> Right r
     (Fail i ss w) -> Left $ intercalate " : " ((show i):w:ss)
     (Partial _)   -> Left "partial ..."
     where
-        p = (`evalStateT` []) cLang
+        p = (`evalStateT` []) program
 
--- | cLang
+-- | program
 --
--- TODO: AST をトップとする
+program :: SParser D.Ast
+program = D.Ast <$> many' (preprocess <|> statement)
+
+
+-- | statement
 --
-cLang :: SParser D.C
-cLang = preprocess <|> statement <|> pure D.End
+statement :: SParser D.Statement
+statement = defVariable <|>  defFunction
 
 -- | preprocess
 --
-preprocess :: SParser D.C
-preprocess = D.Prepro <$> include <*> cLang
+preprocess :: SParser D.Statement
+preprocess = D.Preprocess <$> include
 
 
 -- | include
@@ -107,17 +108,11 @@ condEnd = token $ lift $ string "#endif" *> pure ()
 
 
 
--- | statement
---
-statement :: SParser D.C
-statement =
-        D.Csrc <$> defVariable <*> cLang
-    <|> D.Csrc <$> defFunction <*> cLang
 
 
 -- | defVariable
 --
-defVariable :: SParser D.Cstate
+defVariable :: SParser D.Statement
 defVariable = update $ do
     (name, types) <- typeAndID
     v <- initValue
@@ -158,7 +153,7 @@ initValue = Just <$> p <|> pure Nothing
 
 -- | defFunction
 --
-defFunction :: SParser D.Cstate
+defFunction :: SParser D.Statement
 defFunction = do
     (name, ret) <- typeAndID
     args <- parens arguments
@@ -169,10 +164,10 @@ defFunction = do
 
 -- | arguments
 --
-arguments :: SParser [D.Cstate]
+arguments :: SParser [D.Statement]
 arguments = void <|> justArgs
     where
-        void :: SParser [D.Cstate]
+        void :: SParser [D.Statement]
         void = do
             token $ lift $ string "void"
             s <- get
@@ -180,7 +175,7 @@ arguments = void <|> justArgs
 
 -- | justArgs
 --
-justArgs :: SParser [D.Cstate]
+justArgs :: SParser [D.Statement]
 justArgs = (`sepBy1` comma) $ do
     (name, types) <- typeAndID
     s <- get

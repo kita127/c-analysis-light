@@ -619,6 +619,11 @@ testExpr = TestList
 testProgramInput = [r|
 #include <stdio.h>
 
+#define HOGE    (1)
+#define FUGA    (2)
+#define VARI    HOGE
+
+
 #if VARI == HOGE
 char hoge_globvar = 100;
 #endif    /* VARI */
@@ -643,6 +648,31 @@ testProgram = TestList
                   , D.file = "<stdio.h>"
                   }
                 }
+
+              , D.Preprocess {
+                  D.contents = D.Define {
+                    D.prepro = []
+                  , D.name = "HOGE"
+                  , D.value = "(1)"
+                  }
+                }
+
+              , D.Preprocess {
+                  D.contents = D.Define {
+                    D.prepro = []
+                  , D.name = "FUGA"
+                  , D.value = "(2)"
+                  }
+                }
+
+              , D.Preprocess {
+                  D.contents = D.Define {
+                    D.prepro = []
+                  , D.name = "VARI"
+                  , D.value = "HOGE"
+                  }
+                }
+
               , D.Var {
                   D.prepro = [
                     D.Condition {

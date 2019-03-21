@@ -20,6 +20,7 @@ data Condition = Condition
                  deriving (Eq, Show)
 
 data Ast = Ast [Statement]
+           deriving (Eq, Show)
 
 -- TODO:
 -- typ -> type にしたい

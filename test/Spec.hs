@@ -34,6 +34,7 @@ main = do
       --, testPreprocess
 
       --, testJustPreIf
+      , testProgram
       ]
     return ()
 
@@ -612,6 +613,92 @@ testExpr = TestList
 
   ]
 
+
+-- | testProgram
+--
+testProgramInput = [r|
+#include <stdio.h>
+
+#if VARI == HOGE
+char hoge_globvar = 100;
+#endif    /* VARI */
+
+int main( void )
+{
+    int local_var;
+
+    return (0);
+}
+|]
+
+testProgram :: Test
+testProgram = TestList
+  [ "testProgram normal 1" ~:
+        (exRes $ stParse [] program testProgramInput `feed` "") ~?= Right
+            (
+              D.Ast [
+                D.Preprocess {
+                  D.contents = D.Include {
+                    D.prepro = []
+                  , D.file = "<stdio.h>"
+                  }
+                }
+              , D.Var {
+                  D.prepro = [
+                    D.Condition {
+                      D.command = "#if"
+                    , D.expr = D.Binary {
+                        D.op = "=="
+                      , D.left = D.Identifire {
+                          D.name = "VARI"
+                        }
+                      , D.right = D.Identifire {
+                          D.name = "HOGE"
+                        }
+                      }
+                    }
+                  ]
+                , D.typ = ["char"]
+                , D.name = "hoge_globvar"
+                , D.initVal = Just (D.Literal {
+                    D.value = "100"
+                  })
+                }
+
+              , D.Func {
+                  D.prepro = []
+                , D.return = ["int"]
+                , D.name = "main"
+                , D.args = [
+                    D.Var {
+                      D.prepro = []
+                    , D.typ = ["void"]
+                    , D.name = ""
+                    , D.initVal = Nothing
+                    }
+                  ]
+                , D.procs = [
+                    D.LVar {
+                      D.prepro = []
+                    , D.var = D.Var {
+                        D.prepro = []
+                      , D.typ = ["int"]
+                      , D.name = "local_var"
+                      , D.initVal = Nothing
+                      }
+                    }
+                  , D.Return {
+                      D.prepro = []
+                    , D.operand = D.Literal {
+                        D.value = "0"
+                      }
+                    }
+                  ]
+                }
+              ]
+            )
+
+  ]
 
 
 

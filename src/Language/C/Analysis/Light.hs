@@ -3,6 +3,7 @@
 {-# LANGUAGE TemplateHaskell       #-}
 module Language.C.Analysis.Light
 ( analyze
+, program
 , token
 , defVariable
 , defFunction

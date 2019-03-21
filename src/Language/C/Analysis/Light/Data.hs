@@ -76,6 +76,10 @@ data Exp = PreUnary
            { op      :: T.Text
            , operand :: Exp
            }
+         | PostUnary
+           { op      :: T.Text
+           , operand :: Exp
+           }
          | Binary
            { op    :: T.Text
            , left  :: Exp

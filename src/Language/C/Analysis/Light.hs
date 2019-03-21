@@ -240,7 +240,8 @@ term =  parens' expr' <|> call' <|> id' <|> literal' <|> strLiteral' <?> "simple
         id' = D.Identifire <$> identifire'
 
 table :: [[Operator T.Text D.Exp]]
-table = [ [prefix  "&"  (D.PreUnary "&")]                                                         -- 2
+table = [ [postfix "++" (D.PostUnary "++")]                                                         -- 1  : Left
+        , [prefix  "&"  (D.PreUnary "&")]                                                         -- 2
         , [binary' "*"  (D.Binary "*" ) AssocLeft, binary' "/" (D.Binary "/") AssocLeft]          -- 3  : Left
         , [binary' "+"  (D.Binary "+" ) AssocLeft, binary' "-" (D.Binary "-") AssocLeft]          -- 4  : Left
         , [binary' "==" (D.Binary "==") AssocRight]                                               -- 7  : Left
@@ -255,7 +256,7 @@ table = [ [prefix  "&"  (D.PreUnary "&")]                                       
 binary' :: T.Text -> (D.Exp -> D.Exp -> D.Exp) -> Assoc -> Operator T.Text D.Exp
 binary' name fun assoc = Infix (do{ string name; return fun }) assoc
 prefix  name fun       = Prefix (do{ string name; return fun })
---postfix name fun       = Postfix (do{ string name; return fun })
+postfix name fun       = Postfix (do{ string name; return fun })
 
 -- | call'
 call' :: Parser D.Exp

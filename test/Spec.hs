@@ -613,8 +613,9 @@ testExpr = TestList
 
   ]
 
-
+--------------------------------------------------------------
 -- | testProgram
+--------------------------------------------------------------
 --
 testProgramInput = [r|
 #include <stdio.h>
@@ -631,6 +632,10 @@ char hoge_globvar = 100;
 int main( void )
 {
     int local_var;
+    local_var = 0;
+    local_var++;
+
+    printf("local_var...%d\n", local_var);
 
     return (0);
 }
@@ -715,6 +720,41 @@ testProgram = TestList
                       , D.typ = ["int"]
                       , D.name = "local_var"
                       , D.initVal = Nothing
+                      }
+                    }
+                  , D.ExpState {
+                      D.prepro = []
+                    , D.contents = D.Binary {
+                        D.op = "="
+                      , D.left = D.Identifire {
+                          D.name = "local_var"
+                        }
+                      , D.right = D.Literal {
+                          D.value = "0"
+                        }
+                      }
+                    }
+                  , D.ExpState {
+                      D.prepro = []
+                    , D.contents = D.PostUnary {
+                        D.op = "++"
+                      , D.operand = D.Identifire {
+                          D.name = "local_var"
+                        }
+                      }
+                    }
+                  , D.ExpState {
+                      D.prepro = []
+                    , D.contents = D.Call {
+                        D.func = "printf"
+                      , D.args = [
+                          D.StrLiteral {
+                            D.value = "local_var...%d\\n"
+                          }
+                        , D.Identifire {
+                            D.name = "local_var"
+                          }
+                        ]
                       }
                     }
                   , D.Return {

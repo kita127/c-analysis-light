@@ -619,6 +619,7 @@ testExpr = TestList
 --
 testProgramInput = [r|
 #include <stdio.h>
+#include    "../../external_inc.h"
 
 #define HOGE    (1)
 #define FUGA    (2)
@@ -627,6 +628,9 @@ testProgramInput = [r|
 
 #if VARI == HOGE
 char hoge_globvar = 100;
+  #if VARI_2 == HOGE
+static int hoge_globvar_2 = xxx;
+  #endif
 #endif    /* VARI */
 
 int main( void )
@@ -651,6 +655,13 @@ testProgram = TestList
                   D.contents = D.Include {
                     D.prepro = []
                   , D.file = "<stdio.h>"
+                  }
+                }
+
+              , D.Preprocess {
+                  D.contents = D.Include {
+                    D.prepro = []
+                  , D.file = "../../external_inc.h"
                   }
                 }
 
@@ -697,6 +708,40 @@ testProgram = TestList
                 , D.name = "hoge_globvar"
                 , D.initVal = Just (D.Literal {
                     D.value = "100"
+                  })
+                }
+
+              , D.Var {
+                  D.prepro = [
+                    D.Condition {
+                      D.command = "#if"
+                    , D.expr = D.Binary {
+                        D.op = "=="
+                      , D.left = D.Identifire {
+                          D.name = "VARI"
+                        }
+                      , D.right = D.Identifire {
+                          D.name = "HOGE"
+                        }
+                      }
+                    }
+                  , D.Condition {
+                      D.command = "#if"
+                    , D.expr = D.Binary {
+                        D.op = "=="
+                      , D.left = D.Identifire {
+                          D.name = "VARI_2"
+                        }
+                      , D.right = D.Identifire {
+                          D.name = "HOGE"
+                        }
+                      }
+                    }
+                  ]
+                , D.typ = ["static", "int"]
+                , D.name = "hoge_globvar_2"
+                , D.initVal = Just (D.Identifire {
+                    D.name = "xxx"
                   })
                 }
 

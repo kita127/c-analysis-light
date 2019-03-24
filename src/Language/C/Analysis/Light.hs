@@ -61,7 +61,16 @@ preprocess = D.Preprocess <$> (include <|> define)
 -- | include
 --
 include :: SParser D.PreState
-include =  D.Include <$> get <* token (lift $ string "#include") <*> file <* tillEndOfLine
+include =  D.Include <$> get <* incKey <*> file <* tillEndOfLine
+    where
+        incKey = token $ lift $ string "#include"
+
+-- | file
+--
+file :: SParser T.Text
+file = envPath <|> strText
+    where envPath = lift (string "<") `liftAp` identifire `liftAp` lift (string ".h") `liftAp` lift (string ">")
+
 
 -- | define
 --
@@ -78,10 +87,6 @@ text = end <|> T.cons <$> fetch <*> text
         end = lift (char '\n' *> pure "")
         fetch = lift anyChar
 
--- | file
---
-file :: SParser T.Text
-file = lift (string "<") `liftAp` identifire `liftAp` lift (string ".h") `liftAp` lift (string ">")
 
 
 -- | tillEndOfLine
@@ -277,8 +282,19 @@ literal' = token' $ D.Literal <$> (hex' <|> integer')
 
 -- | strLiteral
 --
+strLiteral :: SParser D.Exp
+strLiteral = lift strLiteral'
+
 strLiteral' :: Parser D.Exp
-strLiteral' = token' $ D.StrLiteral <$ char '"' <*> takeTill (== '"') <* char '"'
+strLiteral' = token' $ D.StrLiteral <$> strText'
+
+-- | strText
+--
+strText :: SParser T.Text
+strText = lift strText'
+
+strText' :: Parser T.Text
+strText' = char '"' *> takeTill (== '"') <* char '"'
 
 
 -- | identifire

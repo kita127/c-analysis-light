@@ -423,6 +423,15 @@ char condition_variable;
             , D.name = "condition_variable"
             , D.initVal = Nothing
             }
+  , "testDefVariable array 1" ~:
+        (exRes $ stParse [] defVariable "  int    var_arr[10];" `feed` "") ~?= Right
+            D.Var {
+              D.prepro = []
+            , D.typ = ["int", "[10]"]
+            , D.name = "var_arr"
+            , D.initVal = Nothing
+            }
+
   ]
 
 -- | testExpr
@@ -633,6 +642,8 @@ static int hoge_globvar_2 = xxx;
   #endif
 #endif    /* VARI */
 
+int arr_var[10];
+
 int main( void )
 {
     int local_var;
@@ -743,6 +754,13 @@ testProgram = TestList
                 , D.initVal = Just (D.Identifire {
                     D.name = "xxx"
                   })
+                }
+
+              , D.Var {
+                  D.prepro = []
+                , D.typ = ["int", "[10]"]
+                , D.name = "arr_var"
+                , D.initVal = Nothing
                 }
 
               , D.Func {

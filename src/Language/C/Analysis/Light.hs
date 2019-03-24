@@ -146,12 +146,30 @@ defVariable = update $ do
 --
 typeAndID :: SParser (IDStr, [TypeStr])
 typeAndID = do
-    t <- identifire <|> pointer
-    ts <- many1 $ identifire <|> pointer
-    let ids = t:ts
+    t <- identifire
+    ts <- many1 $ arrayAndId <|> singleton identifire <|> singleton pointer
+    let ids = t : (concat ts)
     return (last ids, init ids)
+    where
+        singleton p = fmap (:[]) p
 
 
+-- | arrayAndId
+--
+arrayAndId :: SParser [T.Text]
+arrayAndId = do
+    ident <- identifire
+    arr <- array
+    return $ [arr, ident]
+
+-- | array
+--
+array :: SParser T.Text
+array = do
+    lift $ char '['
+    elem <- identifire <|> numberWord
+    lift $ char ']'
+    return $ "[" `T.append` elem `T.append` "]"
 
 
 
@@ -278,7 +296,7 @@ literal :: SParser D.Exp
 literal = lift literal'
 
 literal' :: Parser D.Exp
-literal' = token' $ D.Literal <$> (hex' <|> integer')
+literal' = token' $ D.Literal <$> numberWord'
 
 -- | strLiteral
 --
@@ -314,8 +332,19 @@ idLetter' :: Parser Char
 idLetter' = letter <|> digit <|> char '_'
 
 
+-- | numberWord
+--
+numberWord :: SParser T.Text
+numberWord = lift numberWord'
+
+numberWord' :: Parser T.Text
+numberWord' = hex' <|> integer'
+
 -- | integer
 --
+integer :: SParser T.Text
+integer = lift integer'
+
 integer' :: Parser T.Text
 integer' = token' $ T.pack <$> many1 digit
 

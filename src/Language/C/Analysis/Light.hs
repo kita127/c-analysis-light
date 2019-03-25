@@ -10,6 +10,7 @@ module Language.C.Analysis.Light
 , identifire
 , preprocess
 , expr
+, ifStatement
 ) where
 
 import           Control.Applicative
@@ -241,6 +242,13 @@ process = funcRet <|> defLVariable <|> exprState
 --
 exprState :: SParser D.Proc
 exprState = update $ D.ExpState <$> get <*> expr <* semicolon
+
+-- | ifStatement
+--
+ifStatement :: SParser D.Proc
+ifStatement = update $ D.IfStatement <$ ifKey <*> get <*> parens expr <*> block
+    where
+        ifKey = token $ lift $ string "if"
 
 
 -- ----------------------------------------------------------------------------------

@@ -29,11 +29,8 @@ main = do
       , testInclude
       , testDefine
       , testExpr
-      --, testArguments
+      , testIfStatement
 
-      --, testPreprocess
-
-      --, testJustPreIf
       , testProgram
       ]
     return ()
@@ -621,6 +618,27 @@ testExpr = TestList
 
 
   ]
+
+testIfStatement :: Test
+testIfStatement = TestList
+  [ "testIfStatement normal 1" ~:
+        (exRes $ stParse [] ifStatement [r|
+if (hoge) {
+
+}
+|] `feed` "") ~?= Right
+            D.IfStatement {
+              D.prepro = []
+            , D.condition = D.Identifire {
+                name = "hoge"
+              }
+            , D.procs = []
+            }
+
+  ]
+
+
+
 
 --------------------------------------------------------------
 -- | testProgram

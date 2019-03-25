@@ -70,6 +70,11 @@ data Proc = Return
             { prepro   :: [Condition]
             , contents :: Exp
             }
+          | IfStatement
+            { prepro    :: [Condition]
+            , condition :: Exp
+            , procs     :: [Proc]
+            }
           deriving (Eq, Show)
 
 data Exp = PreUnary

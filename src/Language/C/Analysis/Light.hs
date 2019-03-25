@@ -325,6 +325,8 @@ strText' = char '"' *> takeTill (== '"') <* char '"'
 
 -- | identifire
 --
+-- TODO:1文字識別子だとバグる
+--
 identifire :: SParser T.Text
 identifire = lift identifire'
 

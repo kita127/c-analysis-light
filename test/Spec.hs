@@ -624,7 +624,7 @@ testIfStatement = TestList
   [ "testIfStatement normal 1" ~:
         (exRes $ stParse [] ifStatement [r|
 if (hoge) {
-
+    fuga++;
 }
 |] `feed` "") ~?= Right
             D.IfStatement {
@@ -632,7 +632,17 @@ if (hoge) {
             , D.condition = D.Identifire {
                 name = "hoge"
               }
-            , D.procs = []
+            , D.procs = [
+                D.ExpState {
+                  D.prepro = []
+                , D.contents = D.PostUnary {
+                    D.op = "++"
+                  , D.operand = D.Identifire {
+                      D.name = "fuga"
+                    }
+                  }
+                }
+              ]
             }
 
   ]

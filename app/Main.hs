@@ -29,7 +29,7 @@ myOpt = Option
 parserInfo :: ParserInfo Option
 parserInfo = info (helper <*> myOpt)
     $  fullDesc
-    <> progDesc "descliption"
+    <> progDesc "It is a tool which parse C language source."
     <> header "header"
 
 -----------------------------------------------------------------------
